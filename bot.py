@@ -110,12 +110,11 @@ async def fcast(c: Client, m: Message):
     lel = await m.reply_text("`⚡️ Processing...`")
     success, failed, deactivated, blocked = 0, 0, 0, 0
 
-    # Ensure a reply to a message is provided
-    if not m.reply_to_message:
-        await lel.edit_text("Please reply to a message to broadcast.")
-        return
-
-    broadcast_msg = m.reply_to_message
+    # Check if there's a reply message, otherwise use the original message.
+    if m.reply_to_message:
+        broadcast_msg = m.reply_to_message
+    else:
+        broadcast_msg = m
 
     for user in allusers:
         try:
@@ -167,6 +166,7 @@ async def fcast(c: Client, m: Message):
         f"👾 Found {blocked} blocked users.\n"
         f"👻 Found {deactivated} deactivated users."
     )
+
 
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
 async def add_delay_before_accepting(_, m: Message):
