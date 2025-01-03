@@ -117,7 +117,7 @@ async def fcast(c: Client, m: Message):
         # Strip the command and take the rest of the text in the message
         broadcast_msg_text = m.text.split(" ", 1)[1] if len(m.text.split(" ", 1)) > 1 else None
         if broadcast_msg_text:
-            broadcast_msg = Message(text=broadcast_msg_text)  # Create a new Message with just the text
+            broadcast_msg_text = broadcast_msg_text  # Use just the text after the command
         else:
             await lel.edit_text("❌ No message content found after the command.")
             return
@@ -125,11 +125,11 @@ async def fcast(c: Client, m: Message):
     # Broadcast the message to all users
     for user in allusers:
         try:
-            if broadcast_msg.text:
+            if broadcast_msg_text:
                 # Send the stripped text message to user
                 await c.send_message(
                     chat_id=user,
-                    text=broadcast_msg.text,
+                    text=broadcast_msg_text,
                     parse_mode=None  # Temporarily disabled parse mode
                 )
             else:
@@ -154,7 +154,6 @@ async def fcast(c: Client, m: Message):
         f"👾 Found {blocked} blocked users.\n"
         f"👻 Found {deactivated} deactivated users."
     )
-
 
 
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
