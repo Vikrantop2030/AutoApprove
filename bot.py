@@ -123,28 +123,28 @@ async def fcast(c: Client, m: Message):
                 await c.send_message(
                     chat_id=user,
                     text=broadcast_msg.text,
-                    parse_mode="html"  # Set to "html" or "markdown" as needed
+                    parse_mode=None  # Temporarily disabled parse mode
                 )
             elif broadcast_msg.photo:
                 await c.send_photo(
                     chat_id=user,
                     photo=broadcast_msg.photo.file_id,
                     caption=broadcast_msg.caption,
-                    parse_mode="html"
+                    parse_mode=None  # Temporarily disabled parse mode
                 )
             elif broadcast_msg.video:
                 await c.send_video(
                     chat_id=user,
                     video=broadcast_msg.video.file_id,
                     caption=broadcast_msg.caption,
-                    parse_mode="html"
+                    parse_mode=None  # Temporarily disabled parse mode
                 )
             elif broadcast_msg.animation:
                 await c.send_animation(
                     chat_id=user,
                     animation=broadcast_msg.animation.file_id,
                     caption=broadcast_msg.caption,
-                    parse_mode="html"
+                    parse_mode=None  # Temporarily disabled parse mode
                 )
             else:
                 failed += 1
@@ -167,7 +167,6 @@ async def fcast(c: Client, m: Message):
         f"👾 Found {blocked} blocked users.\n"
         f"👻 Found {deactivated} deactivated users."
     )
-
 
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
 async def add_delay_before_accepting(_, m: Message):
