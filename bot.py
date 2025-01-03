@@ -113,22 +113,33 @@ async def fcast(c: Client, m: Message):
     deactivated = 0
     blocked = 0
 
-    # Check if the broadcast message is a reply to another message
     if not m.reply_to_message:
         await lel.edit_text("Please reply to a message to broadcast.")
         return
 
-    # Message to be broadcasted
+    # Get the message to broadcast
     broadcast_msg = m.reply_to_message
 
     for user in allusers:
         try:
-            # Use send_copy to resend the message without forwarding
-            await c.send_copy(chat_id=user, message=broadcast_msg)
+            if broadcast_msg.text:
+                # If the message is text
+                await c.send_message(chat_id=user, text=broadcast_msg.text, parse_mode="markdown")
+            elif broadcast_msg.photo:
+                # If the message is a photo
+                await c.send_photo(chat_id=user, photo=broadcast_msg.photo.file_id, caption=broadcast_msg.caption)
+            elif broadcast_msg.video:
+                # If the message is a video
+                await c.send_video(chat_id=user, video=broadcast_msg.video.file_id, caption=broadcast_msg.caption)
+            elif broadcast_msg.animation:
+                # If the message is an animation (GIF)
+                await c.send_animation(chat_id=user, animation=broadcast_msg.animation.file_id, caption=broadcast_msg.caption)
+            else:
+                failed += 1
+                continue
             success += 1
         except FloodWait as ex:
             await asyncio.sleep(ex.value)
-            continue
         except InputUserDeactivated:
             deactivated += 1
             remove_user(user)
@@ -138,13 +149,13 @@ async def fcast(c: Client, m: Message):
             print(e)
             failed += 1
 
-    # Edit the progress message with final stats
     await lel.edit_text(
         f"✅ Successful Broadcast to {success} users.\n"
         f"❌ Failed to {failed} users.\n"
         f"👾 Found {blocked} Blocked users.\n"
         f"👻 Found {deactivated} Deactivated users."
     )
+
     
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
 async def add_delay_before_accepting(_, m: Message):
