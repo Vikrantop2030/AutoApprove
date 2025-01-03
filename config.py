@@ -3,6 +3,8 @@ from os import getenv
 from dotenv import load_dotenv
 
 #Necessary Variables 
+CHANNEL_ID = -1001234567890  # Replace with your channel's ID
+
 API_ID = int(getenv("API_ID", 29400566))
 API_HASH = getenv("API_HASH", "8fd30dc496aea7c14cf675f59b74ec6f")
 BOT_TOKEN = getenv("BOT_TOKEN") #Put your bot token here
