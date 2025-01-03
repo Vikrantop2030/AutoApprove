@@ -108,11 +108,9 @@ async def dbtool(app: Client, m: Message):
 async def fcast(c: Client, m: Message):
     allusers = get_all_peers()
     lel = await m.reply_text("`⚡️ Processing...`")
-    success = 0
-    failed = 0
-    deactivated = 0
-    blocked = 0
+    success, failed, deactivated, blocked = 0, 0, 0, 0
 
+    # Ensure a reply to a message is provided
     if not m.reply_to_message:
         await lel.edit_text("Please reply to a message to broadcast.")
         return
@@ -122,13 +120,32 @@ async def fcast(c: Client, m: Message):
     for user in allusers:
         try:
             if broadcast_msg.text:
-                await c.send_message(chat_id=user, text=broadcast_msg.text, parse_mode="html")
+                await c.send_message(
+                    chat_id=user,
+                    text=broadcast_msg.text,
+                    parse_mode="html"  # Set to "html" or "markdown" as needed
+                )
             elif broadcast_msg.photo:
-                await c.send_photo(chat_id=user, photo=broadcast_msg.photo.file_id, caption=broadcast_msg.caption, parse_mode="html")
+                await c.send_photo(
+                    chat_id=user,
+                    photo=broadcast_msg.photo.file_id,
+                    caption=broadcast_msg.caption,
+                    parse_mode="html"
+                )
             elif broadcast_msg.video:
-                await c.send_video(chat_id=user, video=broadcast_msg.video.file_id, caption=broadcast_msg.caption, parse_mode="html")
+                await c.send_video(
+                    chat_id=user,
+                    video=broadcast_msg.video.file_id,
+                    caption=broadcast_msg.caption,
+                    parse_mode="html"
+                )
             elif broadcast_msg.animation:
-                await c.send_animation(chat_id=user, animation=broadcast_msg.animation.file_id, caption=broadcast_msg.caption, parse_mode="html")
+                await c.send_animation(
+                    chat_id=user,
+                    animation=broadcast_msg.animation.file_id,
+                    caption=broadcast_msg.caption,
+                    parse_mode="html"
+                )
             else:
                 failed += 1
                 continue
@@ -141,14 +158,14 @@ async def fcast(c: Client, m: Message):
         except UserIsBlocked:
             blocked += 1
         except Exception as e:
-            print(e)
+            print(f"Error for user {user}: {e}")
             failed += 1
 
     await lel.edit_text(
-        f"✅ Successful Broadcast to {success} users.\n"
-        f"❌ Failed to {failed} users.\n"
-        f"👾 Found {blocked} Blocked users.\n"
-        f"👻 Found {deactivated} Deactivated users."
+        f"✅ Successfully broadcast to {success} users.\n"
+        f"❌ Failed for {failed} users.\n"
+        f"👾 Found {blocked} blocked users.\n"
+        f"👻 Found {deactivated} deactivated users."
     )
 
 
