@@ -17,10 +17,10 @@ from database import (add_accept_delay, add_group, add_user, all_groups,
 app = Client("Auto Approve Bot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN)
 
 welcome=[
-    "https://telegra.ph/file/51d04427815840250d03a.mp4",
-    "https://telegra.ph/file/f41fddb95dceca7b09cbc.mp4",
-    "https://telegra.ph/file/a66716c98fa50b2edd63d.mp4",
-    "https://telegra.ph/file/17a8ab5b8eeb0b898d575.mp4",
+    "https://i.ibb.co/MNH8176/logo.jpg",
+    "https://i.ibb.co/MNH8176/logo.jpg",
+    "https://i.ibb.co/MNH8176/logo.jpg",
+    "https://i.ibb.co/MNH8176/logo.jpg",
 ]
 
 def_delay = config.DELAY
@@ -32,7 +32,7 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     try:
         await j.approve()
         gif = random.choice(welcome)
-        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}")
+        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted You can Now access the channel https://telegram.me/+lXrAfXyyn8tjNjk1 
     except (UserIsBlocked, PeerIdInvalid):
         pass
 
@@ -72,7 +72,7 @@ async def start(app: Client, msg: Message):
     # else:
     # add_user(msg.from_user.id)
     await msg.reply_photo(
-        photo="https://telegra.ph/file/f394c45e5f2f147a37090.jpg",
+        photo="https://i.ibb.co/MNH8176/logo.jpg",
         caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
         reply_markup=InlineKeyboardMarkup(
             [
