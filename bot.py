@@ -124,16 +124,16 @@ async def fcast(c: Client, m: Message):
         try:
             if broadcast_msg.text:
                 # If the message is text
-                await c.send_message(chat_id=user, text=broadcast_msg.text, parse_mode="markdown")
+                await c.send_message(chat_id=user, text=broadcast_msg.text, parse_mode="markdown2")
             elif broadcast_msg.photo:
                 # If the message is a photo
-                await c.send_photo(chat_id=user, photo=broadcast_msg.photo.file_id, caption=broadcast_msg.caption)
+                await c.send_photo(chat_id=user, photo=broadcast_msg.photo.file_id, caption=broadcast_msg.caption, parse_mode="markdown2")
             elif broadcast_msg.video:
                 # If the message is a video
-                await c.send_video(chat_id=user, video=broadcast_msg.video.file_id, caption=broadcast_msg.caption)
+                await c.send_video(chat_id=user, video=broadcast_msg.video.file_id, caption=broadcast_msg.caption, parse_mode="markdown2")
             elif broadcast_msg.animation:
                 # If the message is an animation (GIF)
-                await c.send_animation(chat_id=user, animation=broadcast_msg.animation.file_id, caption=broadcast_msg.caption)
+                await c.send_animation(chat_id=user, animation=broadcast_msg.animation.file_id, caption=broadcast_msg.caption, parse_mode="markdown2")
             else:
                 failed += 1
                 continue
@@ -156,7 +156,6 @@ async def fcast(c: Client, m: Message):
         f"👻 Found {deactivated} Deactivated users."
     )
 
-    
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
 async def add_delay_before_accepting(_, m: Message):
     splited = m.command
