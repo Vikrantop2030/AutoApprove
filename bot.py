@@ -17,10 +17,10 @@ from database import (add_accept_delay, add_group, add_user, all_groups,
 app = Client("Auto Approve Bot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN)
 
 welcome=[
-    "https://telegra.ph/file/51d04427815840250d03a.mp4",
-    "https://telegra.ph/file/f41fddb95dceca7b09cbc.mp4",
-    "https://telegra.ph/file/a66716c98fa50b2edd63d.mp4",
-    "https://telegra.ph/file/17a8ab5b8eeb0b898d575.mp4",
+    "https://i.ibb.co/MNH8176/logo.jpg",
+    "https://i.ibb.co/MNH8176/logo.jpg",
+    "https://i.ibb.co/MNH8176/logo.jpg",
+    "https://i.ibb.co/MNH8176/logo.jpg",
 ]
 
 def_delay = config.DELAY
@@ -72,7 +72,7 @@ async def start(app: Client, msg: Message):
     # else:
     # add_user(msg.from_user.id)
     await msg.reply_photo(
-        photo="https://telegra.ph/file/f394c45e5f2f147a37090.jpg",
+        photo="https://i.ibb.co/MNH8176/logo.jpg",
         caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -80,7 +80,7 @@ async def start(app: Client, msg: Message):
                     InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")
                 ],
                 [
-                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://gojo_bots_network.t.me/")
+                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://i.ibb.co/MNH8176/logo.jpg/")
                 ],
             ]
         )
@@ -105,49 +105,46 @@ async def dbtool(app: Client, m: Message):
 
 #Broadcast
 @app.on_message(filters.command("fbroadcast") & filters.user(config.OWNER_ID))
-async def fcast(c: Client, m : Message):
+async def fcast(c: Client, m: Message):
     allusers = get_all_peers()
     lel = await m.reply_text("`⚡️ Processing...`")
     success = 0
     failed = 0
     deactivated = 0
-    repl_to = m.reply_to_message
     blocked = 0
-    if not repl_to:
-        await lel.edit_text("Please reply to a message")
+
+    # Check if the broadcast message is a reply to another message
+    if not m.reply_to_message:
+        await lel.edit_text("Please reply to a message to broadcast.")
         return
-    _id = repl_to.id
-    chat_id = m.chat.id
+
+    # Message to be broadcasted
+    broadcast_msg = m.reply_to_message
+
     for user in allusers:
         try:
-            if m.media_group_id:
-                await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
-                success += 1
-            else:
-                await repl_to.forward(user)
-                success +=1
+            # Use send_copy to resend the message without forwarding
+            await c.send_copy(chat_id=user, message=broadcast_msg)
+            success += 1
         except FloodWait as ex:
             await asyncio.sleep(ex.value)
-            try:
-                if m.media_group_id:
-                    await c.forward_media_group(user, chat_id, _id)
-                    success += 1
-                else:
-                    await repl_to.forward(user, hide_sender_name=True)
-                    success +=1
-            except Exception as e:
-                print(f"Error while broadcast {e}")
-                continue
+            continue
         except InputUserDeactivated:
-            deactivated +=1
+            deactivated += 1
             remove_user(user)
         except UserIsBlocked:
-            blocked +=1
+            blocked += 1
         except Exception as e:
             print(e)
-            failed +=1
+            failed += 1
 
-    await lel.edit(f"✅Successful Broadcast to {success} users.\n❌ Failed to {failed} users.\n👾 Found {blocked} Blocked users \n👻 Found {deactivated} Deactivated users.")
+    # Edit the progress message with final stats
+    await lel.edit_text(
+        f"✅ Successful Broadcast to {success} users.\n"
+        f"❌ Failed to {failed} users.\n"
+        f"👾 Found {blocked} Blocked users.\n"
+        f"👻 Found {deactivated} Deactivated users."
+    )
     
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
 async def add_delay_before_accepting(_, m: Message):
