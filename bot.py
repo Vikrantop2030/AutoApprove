@@ -114,40 +114,22 @@ async def fcast(c: Client, m: Message):
     if m.reply_to_message:
         broadcast_msg = m.reply_to_message  # Use the message being replied to.
     else:
-        broadcast_msg = m  # Use the original message (the command message).
+        # Strip the command and take the rest of the text in the message
+        broadcast_msg_text = m.text.split(" ", 1)[1] if len(m.text.split(" ", 1)) > 1 else None
+        if broadcast_msg_text:
+            broadcast_msg = Message(text=broadcast_msg_text)  # Create a new Message with just the text
+        else:
+            await lel.edit_text("❌ No message content found after the command.")
+            return
 
     # Broadcast the message to all users
     for user in allusers:
         try:
             if broadcast_msg.text:
-                # Send text message to user
+                # Send the stripped text message to user
                 await c.send_message(
                     chat_id=user,
                     text=broadcast_msg.text,
-                    parse_mode=None  # Temporarily disabled parse mode
-                )
-            elif broadcast_msg.photo:
-                # Send photo message to user
-                await c.send_photo(
-                    chat_id=user,
-                    photo=broadcast_msg.photo.file_id,
-                    caption=broadcast_msg.caption,
-                    parse_mode=None  # Temporarily disabled parse mode
-                )
-            elif broadcast_msg.video:
-                # Send video message to user
-                await c.send_video(
-                    chat_id=user,
-                    video=broadcast_msg.video.file_id,
-                    caption=broadcast_msg.caption,
-                    parse_mode=None  # Temporarily disabled parse mode
-                )
-            elif broadcast_msg.animation:
-                # Send animation message to user
-                await c.send_animation(
-                    chat_id=user,
-                    animation=broadcast_msg.animation.file_id,
-                    caption=broadcast_msg.caption,
                     parse_mode=None  # Temporarily disabled parse mode
                 )
             else:
@@ -172,6 +154,7 @@ async def fcast(c: Client, m: Message):
         f"👾 Found {blocked} blocked users.\n"
         f"👻 Found {deactivated} deactivated users."
     )
+
 
 
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
