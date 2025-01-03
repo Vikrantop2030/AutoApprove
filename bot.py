@@ -35,25 +35,19 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
 
         # Fetch a custom welcome message from the specified channel (defined in config)
         channel_id = config.CHANNEL_ID  # Your custom channel's ID
-        custom_message = await app.get_chat_history(channel_id, limit=1)  # Get the latest message
-
-        # Check if we got a message
-        if custom_message:
-            custom_message_text = custom_message[0].text  # Extract the text from the most recent message
-        else:
-            custom_message_text = f"Hey {user.first_name}, welcome to {chat.title}!"  # Default message
+        async for message in app.get_chat_history(channel_id, limit=1):
+            custom_message_text = message.text if message.text else f"Hey {user.first_name}, welcome to {chat.title}!"  # Fallback message
 
         # Send the custom message and GIF to the user
         gif = random.choice(welcome)
         await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey {user.first_name}\n{custom_message_text}")
-        
+
     except (UserIsBlocked, PeerIdInvalid):
         pass
     except Exception as e:
         print(f"Error: {e}")
     return
 
-# Approve Join Requests
 @app.on_chat_join_request()
 async def approval(app: Client, m: ChatJoinRequest):
     usr = m.from_user
@@ -68,7 +62,6 @@ async def approval(app: Client, m: ChatJoinRequest):
 
     asyncio.create_task(create_approve_task(app, m, Delay))
 
-# Private Start Command
 @app.on_message(filters.command("start") & filters.private)
 async def start(app: Client, msg: Message):
     await msg.reply_photo(
@@ -76,14 +69,17 @@ async def start(app: Client, msg: Message):
         caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.first_name} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")],
-                [InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://i.ibb.co/MNH8176/logo.jpg/")]
+                [
+                    InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")
+                ],
+                [
+                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://i.ibb.co/MNH8176/logo.jpg/")
+                ],
             ]
         )
     )
     add_user(msg.from_user.id)
 
-# Group Start Command
 @app.on_message(filters.command("start") & filters.group)
 async def gc(app: Client, msg: Message):
     add_group(msg.chat.id)
@@ -91,36 +87,39 @@ async def gc(app: Client, msg: Message):
         add_user(msg.from_user.id)
     await msg.reply_text(text=f"{msg.from_user.mention} Start Me In Private For More Info..", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Start Me In Private", url=f"https://t.me/{app.me.username}?start=start")]]))
 
-# Stats Command
 @app.on_message(filters.command("stats") & filters.user(config.OWNER_ID))
 async def dbtool(app: Client, m: Message):
     xx = all_users()
     x = all_groups()
     await m.reply_text(text=f"Stats for {app.me.mention}\n🙋‍♂️ Users : {xx}\n👥 Groups : {x}")
 
-# Broadcast Command
 @app.on_message(filters.command("fbroadcast") & filters.user(config.OWNER_ID))
 async def fcast(c: Client, m: Message):
     allusers = get_all_peers()
     lel = await m.reply_text("`⚡️ Processing...`")
     success, failed, deactivated, blocked = 0, 0, 0, 0
 
-    # Check if there's a reply message, otherwise use the original message.
     if m.reply_to_message:
-        broadcast_msg = m.reply_to_message  # Use the message being replied to.
+        broadcast_msg = m.reply_to_message
     else:
         broadcast_msg_text = m.text.split(" ", 1)[1] if len(m.text.split(" ", 1)) > 1 else None
         if broadcast_msg_text:
-            broadcast_msg_text = broadcast_msg_text  # Use just the text after the command
+            broadcast_msg_text = broadcast_msg_text
         else:
             await lel.edit_text("❌ No message content found after the command.")
             return
 
-    # Broadcast the message to all users
     for user in allusers:
         try:
             if broadcast_msg_text:
-                await c.send_message(chat_id=user, text=broadcast_msg_text, parse_mode=None)
+                await c.send_message(
+                    chat_id=user,
+                    text=broadcast_msg_text,
+                    parse_mode=None
+                )
+            else:
+                failed += 1
+                continue
             success += 1
         except FloodWait as ex:
             await asyncio.sleep(ex.value)
@@ -133,9 +132,13 @@ async def fcast(c: Client, m: Message):
             print(f"Error for user {user}: {e}")
             failed += 1
 
-    await lel.edit_text(f"✅ Successfully broadcast to {success} users.\n❌ Failed for {failed} users.\n👾 Found {blocked} blocked users.\n👻 Found {deactivated} deactivated users.")
+    await lel.edit_text(
+        f"✅ Successfully broadcast to {success} users.\n"
+        f"❌ Failed for {failed} users.\n"
+        f"👾 Found {blocked} blocked users.\n"
+        f"👻 Found {deactivated} deactivated users."
+    )
 
-# Delay Command
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
 async def add_delay_before_accepting(_, m: Message):
     splited = m.command
@@ -162,7 +165,6 @@ async def add_delay_before_accepting(_, m: Message):
     await m.reply_text(f"Added delay of {delay} seconds before accepting join request")
     return
 
-# Run the Bot
 print(f"Starting {app.name}")
 try:
     app.run()
