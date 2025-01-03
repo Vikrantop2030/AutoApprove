@@ -112,19 +112,22 @@ async def fcast(c: Client, m: Message):
 
     # Check if there's a reply message, otherwise use the original message.
     if m.reply_to_message:
-        broadcast_msg = m.reply_to_message
+        broadcast_msg = m.reply_to_message  # Use the message being replied to.
     else:
-        broadcast_msg = m
+        broadcast_msg = m  # Use the original message (the command message).
 
+    # Broadcast the message to all users
     for user in allusers:
         try:
             if broadcast_msg.text:
+                # Send text message to user
                 await c.send_message(
                     chat_id=user,
                     text=broadcast_msg.text,
                     parse_mode=None  # Temporarily disabled parse mode
                 )
             elif broadcast_msg.photo:
+                # Send photo message to user
                 await c.send_photo(
                     chat_id=user,
                     photo=broadcast_msg.photo.file_id,
@@ -132,6 +135,7 @@ async def fcast(c: Client, m: Message):
                     parse_mode=None  # Temporarily disabled parse mode
                 )
             elif broadcast_msg.video:
+                # Send video message to user
                 await c.send_video(
                     chat_id=user,
                     video=broadcast_msg.video.file_id,
@@ -139,6 +143,7 @@ async def fcast(c: Client, m: Message):
                     parse_mode=None  # Temporarily disabled parse mode
                 )
             elif broadcast_msg.animation:
+                # Send animation message to user
                 await c.send_animation(
                     chat_id=user,
                     animation=broadcast_msg.animation.file_id,
@@ -147,7 +152,7 @@ async def fcast(c: Client, m: Message):
                 )
             else:
                 failed += 1
-                continue
+                continue  # Skip users for unsupported media types.
             success += 1
         except FloodWait as ex:
             await asyncio.sleep(ex.value)
@@ -160,6 +165,7 @@ async def fcast(c: Client, m: Message):
             print(f"Error for user {user}: {e}")
             failed += 1
 
+    # After processing, update the user with the result
     await lel.edit_text(
         f"✅ Successfully broadcast to {success} users.\n"
         f"❌ Failed for {failed} users.\n"
