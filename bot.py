@@ -30,9 +30,9 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
             channel_link = f"https://t.me/{chat.username}"
             # Inline button for public channel
             buttons = [
-                [InlineKeyboardButton("Join Channel", url=channel_link)]
+                [InlineKeyboardButton("View Channel", url=channel_link)]
             ]
-            welcome_text = f"Hey {user.first_name}!\nWelcome to {chat.title}\n\nYour request to join {chat.title} has been accepted.\n\nClick below to join the channel:"
+            welcome_text = f"Hey {user.first_name}!\nWelcome to {chat.title}\n\nYour request to join {chat.title} has been accepted.\n\nClick below to view the channel:"
         else:
             # Private channel: Generate an invite link if the bot has permission
             try:
@@ -40,9 +40,9 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
                 channel_link = link
                 # Display channel preview for private channel
                 buttons = [
-                    [InlineKeyboardButton("Join Channel", url=channel_link)]
+                    [InlineKeyboardButton("View Channel", url=channel_link)]
                 ]
-                welcome_text = f"Hey {user.first_name}!\nWelcome to {chat.title}\n\nYour request to join {chat.title} has been accepted.\n\nClick below to join the private channel:"
+                welcome_text = f"Hey {user.first_name}!\nWelcome to {chat.title}\n\nYour request to join {chat.title} has been accepted.\n\nClick below to view the private channel:"
             except ChatAdminRequired:
                 # If the bot can't generate the invite link
                 channel_link = "Private channel. Contact admin for an invite link."
