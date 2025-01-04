@@ -6,16 +6,16 @@ from pyrogram.types import ChatJoinRequest, InlineKeyboardButton, InlineKeyboard
 from pyrogram.errors import UserIsBlocked, PeerIdInvalid, InputUserDeactivated, FloodWait
 
 # Configurations
-API_ID = "your_api_id"
-API_HASH = "your_api_hash"
-BOT_TOKEN = "your_bot_token"
-OWNER_ID = 123456789  # Your Telegram user ID
+API_ID = config.API_ID  # Replace this with the actual integer value from your config file
+API_HASH = config.API_HASH  # Replace this with the actual string value from your config file
+BOT_TOKEN = config.BOT_TOKEN  # Replace this with the actual token from your config file
+OWNER_ID = 123456789  # Replace this with your actual Telegram user ID
 WELCOME_GIFS = [
     "https://i.ibb.co/MNH8176/logo.jpg",
     "https://i.ibb.co/MNH8176/logo.jpg",
     "https://i.ibb.co/MNH8176/logo.jpg"
 ]
-DEFAULT_DELAY = 10  # Seconds
+DEFAULT_DELAY = config.DELAY  # Replace this with the default delay value from your config file
 
 # Initialize Bot
 app = Client("AutoApproveBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
