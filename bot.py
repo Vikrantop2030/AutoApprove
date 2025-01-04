@@ -17,10 +17,7 @@ from database import (add_accept_delay, add_group, add_user, all_groups,
 app = Client("Auto Approve Bot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN)
 
 welcome = [
-    "https://telegra.ph/file/51d04427815840250d03a.mp4",
-    "https://telegra.ph/file/f41fddb95dceca7b09cbc.mp4",
-    "https://telegra.ph/file/a66716c98fa50b2edd63d.mp4",
-    "https://telegra.ph/file/17a8ab5b8eeb0b898d575.mp4",
+    "https://i.ibb.co/09BvZdc/ezgif-com-video-to-gif-converter.gif",  # Updated welcome image
 ]
 
 def_delay = config.DELAY
@@ -33,11 +30,11 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
         await j.approve()
         gif = random.choice(welcome)
         # Show inline button to the channel
-        join_button = InlineKeyboardButton("Join Channel", url=f"https://t.me/{chat.username}") if chat.username else None
+        join_button = InlineKeyboardButton("Click to View Channel", url=f"https://t.me/{chat.username}") if chat.username else None
         
         # If the channel is private, show the invite link instead
         if not join_button:
-            join_button = InlineKeyboardButton("Invite Link", url=f"https://t.me/{app.me.username}?startgroup=true")
+            join_button = InlineKeyboardButton("Click to View Channel", url=f"https://t.me/{app.me.username}?startgroup=true")
         
         await app.send_animation(
             chat_id=user.id, 
@@ -70,7 +67,7 @@ async def approval(app: Client, m: ChatJoinRequest):
 @app.on_message(filters.command("start") & filters.private)
 async def start(app: Client, msg: Message):
     await msg.reply_photo(
-        photo="https://telegra.ph/file/f394c45e5f2f147a37090.jpg",
+        photo="https://i.ibb.co/09BvZdc/ezgif-com-video-to-gif-converter.gif",  # Updated welcome image
         caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
         reply_markup=InlineKeyboardMarkup(
             [
