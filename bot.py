@@ -1,7 +1,6 @@
 import asyncio
 import random
 import traceback
-import re
 
 from pyrogram import Client, filters
 from pyrogram.errors import (ChatAdminRequired, FloodWait,
@@ -66,6 +65,7 @@ async def approval(app: Client, m: ChatJoinRequest):
 
     asyncio.create_task(create_approve_task(app, m, Delay))
 
+
 # Private start
 @app.on_message(filters.command("start") & filters.private)
 async def start(app: Client, msg: Message):
@@ -85,6 +85,7 @@ async def start(app: Client, msg: Message):
     )
     add_user(msg.from_user.id)
 
+
 # Group start and id
 @app.on_message(filters.command("start") & filters.group)
 async def gc(app: Client, msg: Message):
@@ -93,12 +94,14 @@ async def gc(app: Client, msg: Message):
         add_user(msg.from_user.id)
     await msg.reply_text(text=f"{msg.from_user.mention} Start Me In Private For More Info..", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Start Me In Private", url=f"https://t.me/{app.me.username}?start=start")]]))
 
+
 # Stats
 @app.on_message(filters.command("stats") & filters.user(config.OWNER_ID))
 async def dbtool(app: Client, m: Message):
     xx = all_users()
     x = all_groups()
     await m.reply_text(text=f"Stats for {app.me.mention}\n🙋‍♂️ Users : {xx}\n👥 Groups : {x}")
+
 
 # Broadcast
 @app.on_message(filters.command("fbroadcast") & filters.user(config.OWNER_ID))
@@ -113,35 +116,29 @@ async def fcast(c: Client, m: Message):
     if not repl_to:
         await lel.edit_text("Please reply to a message")
         return
-
     _id = repl_to.id
     chat_id = m.chat.id
     for user in allusers:
         try:
             if repl_to.text:  # Check if there's text content
-                print(f"Sending message to {user.id}: {repl_to.text}")
                 await c.send_message(user, text=repl_to.text or repl_to.caption)
                 success += 1
             elif repl_to.animation:  # Handle GIFs
-                print(f"Sending GIF: {repl_to.animation.file_id}")
-                await c.send_animation(user, animation=repl_to.animation)
+                await c.send_animation(user, animation=repl_to.animation.file_id)  # Fix for sending the file ID
                 success += 1
             elif repl_to.photo:  # Handle images
-                print(f"Sending Photo: {repl_to.photo.file_id}")
-                await c.send_photo(user, photo=repl_to.photo)
+                await c.send_photo(user, photo=repl_to.photo.file_id)  # Fix for sending the file ID
                 success += 1
             else:
-                print(f"No valid content to send for user {user.id}.")
                 failed += 1
-
         except FloodWait as ex:
             await asyncio.sleep(ex.value)
             try:
                 if repl_to.animation:
-                    await c.send_animation(user, animation=repl_to.animation)
+                    await c.send_animation(user, animation=repl_to.animation.file_id)  # Fix for sending the file ID
                     success += 1
                 elif repl_to.photo:
-                    await c.send_photo(user, photo=repl_to.photo)
+                    await c.send_photo(user, photo=repl_to.photo.file_id)  # Fix for sending the file ID
                     success += 1
                 else:
                     await c.send_message(user, text=repl_to.text or repl_to.caption)
@@ -159,6 +156,7 @@ async def fcast(c: Client, m: Message):
             failed += 1
 
     await lel.edit(f"✅Successful Broadcast to {success} users.\n❌ Failed to {failed} users.\n👾 Found {blocked} Blocked users \n👻 Found {deactivated} Deactivated users.")
+
 
 # Delay
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
@@ -186,6 +184,7 @@ async def add_delay_before_accepting(_, m: Message):
     
     await m.reply_text(f"Added delay of {delay} seconds before accepting join request")
     return
+
 
 # Run
 print(f"Starting {app.name}")
