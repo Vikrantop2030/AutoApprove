@@ -16,7 +16,7 @@ from database import (add_accept_delay, add_group, add_user, all_groups,
 
 app = Client("Auto Approve Bot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN)
 
-welcome = [
+welcome=[
     "https://i.ibb.co/MNH8176/logo.jpg",
     "https://i.ibb.co/MNH8176/logo.jpg",
     "https://i.ibb.co/MNH8176/logo.jpg",
@@ -25,33 +25,21 @@ welcome = [
 
 def_delay = config.DELAY
 
-# Custom message
-custom_message_text = "Welcome to the group! We're happy to have you here. Enjoy your stay!"  # Fixed message
-
 async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int):
     await asyncio.sleep(after_delay)
     chat = j.chat
     user = j.from_user
     try:
-        # Approve the join request
         await j.approve()
-
-        # Send the custom message with an animation
         gif = random.choice(welcome)
-        await app.send_animation(
-            chat_id=user.id,
-            animation=gif,
-            caption=f"Hey {user.first_name}\n{custom_message_text}"
-        )
-
+        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}")
     except (UserIsBlocked, PeerIdInvalid):
         pass
-    except Exception as e:
-        print(f"Error: {e}")
+
     return
 
 
-# Approve join requests
+#approve 
 @app.on_chat_join_request()
 async def approval(app: Client, m: ChatJoinRequest):
     usr = m.from_user
@@ -66,10 +54,23 @@ async def approval(app: Client, m: ChatJoinRequest):
 
     asyncio.create_task(create_approve_task(app, m, Delay))
 
+    
 
-# Private start
+#pvtstart
 @app.on_message(filters.command("start") & filters.private)
 async def start(app: Client, msg: Message):
+    # if False:
+    #     try:
+    #         await app.get_chat_member(chat_id=config.CHANNEL, user_id=msg.from_user.id)
+    #         add_user(msg.from_user.id)
+    #         await msg.reply_photo(photo="https://telegra.ph/file/f394c45e5f2f147a37090.jpg", caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉︎ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs..",
+    #                              reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")], [InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://t.me/{config.CHANNEL}")]]))
+    #     except UserNotParticipant:
+    #         await msg.reply_text(text=f"To Use {app.me.mention}, You Must Subscribe To {(await app.get_chat(config.CHANNEL)).title}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Join", url=f"https://t.me/{config.CHANNEL}")], [InlineKeyboardButton ("Joined ✅", url=f"https://t.me/{app.me.username}?start=start")]]))
+    #     except ChatAdminRequired:
+    #         await app.send_message(text=f"I'm not admin in fsub chat, Ending fsub...", chat_id=config.OWNER_ID)
+    # else:
+    # add_user(msg.from_user.id)
     await msg.reply_photo(
         photo="https://i.ibb.co/MNH8176/logo.jpg",
         caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
@@ -79,38 +80,34 @@ async def start(app: Client, msg: Message):
                     InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")
                 ],
                 [
-                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://t.me/{config.CHANNEL}")
+                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://i.ibb.co/MNH8176/logo.jpg/")
                 ],
             ]
         )
     )
     add_user(msg.from_user.id)
+    
 
-
-# Group start and id
+#Gcstart and id
 @app.on_message(filters.command("start") & filters.group)
 async def gc(app: Client, msg: Message):
     add_group(msg.chat.id)
     if msg.from_user:
         add_user(msg.from_user.id)
-    await msg.reply_text(
-        text=f"{msg.from_user.mention} Start Me In Private For More Info..",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Start Me In Private", url=f"https://t.me/{app.me.username}?start=start")]]))
+    await msg.reply_text(text=f"{msg.from_user.mention} Start Me In Private For More Info..", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Start Me In Private", url=f"https://t.me/{app.me.username}?start=start")]]))
 
-
-# Stats
+#stats
 @app.on_message(filters.command("stats") & filters.user(config.OWNER_ID))
 async def dbtool(app: Client, m: Message):
     xx = all_users()
     x = all_groups()
     await m.reply_text(text=f"Stats for {app.me.mention}\n🙋‍♂️ Users : {xx}\n👥 Groups : {x}")
 
-
-# Broadcast
+#Broadcast
 @app.on_message(filters.command("fbroadcast") & filters.user(config.OWNER_ID))
 async def fcast(c: Client, m: Message):
     allusers = get_all_peers()
-    lel = await m.reply_text("`⚡️ Processing...`")
+    lel = await m.reply_text("⚡️ Processing...")
     success, failed, deactivated, blocked = 0, 0, 0, 0
 
     # Check if there's a reply message, otherwise use the original message.
@@ -186,10 +183,10 @@ async def add_delay_before_accepting(_, m: Message):
     return
 
 
-# Run the bot
+#run
 print(f"Starting {app.name}")
 try:
     app.run()
-    print("Started the bot")
+    print("Startd the bot")
 except:
     traceback.print_exc()
