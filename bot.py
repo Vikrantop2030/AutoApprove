@@ -35,10 +35,11 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
         await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}")
     except (UserIsBlocked, PeerIdInvalid):
         pass
+
     return
 
 
-# approve
+# approve 
 @app.on_chat_join_request()
 async def approval(app: Client, m: ChatJoinRequest):
     usr = m.from_user
@@ -66,7 +67,7 @@ async def start(app: Client, msg: Message):
                     InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")
                 ],
                 [
-                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://gojo_bots_network.t.me/"),
+                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://gojo_bots_network.t.me/")
                 ],
             ]
         )
@@ -100,42 +101,47 @@ async def fcast(c: Client, m: Message):
     failed = 0
     deactivated = 0
     blocked = 0
-    
-    # Ensure the command is replied to a message
     repl_to = m.reply_to_message
     if not repl_to:
-        await lel.edit_text("Please reply to a message to broadcast.")
+        await lel.edit_text("Please reply to a message")
         return
-
+    _id = repl_to.id
+    chat_id = m.chat.id
     for user in allusers:
         try:
-            # Forward the message with the sender hidden
-            await c.forward_messages(
-                chat_id=user,
-                from_chat_id=repl_to.chat.id,
-                message_ids=repl_to.id,
-                hide_sender=True  # Hides the original sender's information
-            )
-            success += 1
+            if m.media_group_id:
+                # Forward the media group without showing the "forwarded from" tag
+                await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                success += 1
+            else:
+                # Forward the message without showing the "forwarded from" tag
+                await repl_to.forward(user, hide_sender_name=True)
+                success += 1
         except FloodWait as ex:
             await asyncio.sleep(ex.value)
-            continue
+            try:
+                if m.media_group_id:
+                    await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                    success += 1
+                else:
+                    await repl_to.forward(user, hide_sender_name=True)
+                    success += 1
+            except Exception as e:
+                print(f"Error while broadcast {e}")
+                continue
         except InputUserDeactivated:
             deactivated += 1
             remove_user(user)
         except UserIsBlocked:
             blocked += 1
-        except Exception:
+        except Exception as e:
+            print(e)
             failed += 1
 
-    await lel.edit_text(
-        f"✅ Successful broadcast to {success} users.\n"
-        f"❌ Failed to {failed} users.\n"
-        f"👾 {blocked} users have blocked the bot.\n"
-        f"👻 {deactivated} deactivated users removed from the database."
-    )
+    await lel.edit(f"✅Successful Broadcast to {success} users.\n❌ Failed to {failed} users.\n👾 Found {blocked} Blocked users \n👻 Found {deactivated} Deactivated users.")
 
 
+# Add delay before accepting join request
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
 async def add_delay_before_accepting(_, m: Message):
     splited = m.command
@@ -163,7 +169,7 @@ async def add_delay_before_accepting(_, m: Message):
     return
 
 
-# run
+# Run
 print(f"Starting {app.name}")
 try:
     app.run()
