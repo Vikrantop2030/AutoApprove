@@ -39,7 +39,7 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     return
 
 
-# approve 
+# Approve
 @app.on_chat_join_request()
 async def approval(app: Client, m: ChatJoinRequest):
     usr = m.from_user
@@ -55,7 +55,7 @@ async def approval(app: Client, m: ChatJoinRequest):
     asyncio.create_task(create_approve_task(app, m, Delay))
 
 
-# pvtstart
+# Private start
 @app.on_message(filters.command("start") & filters.private)
 async def start(app: Client, msg: Message):
     await msg.reply_photo(
@@ -67,7 +67,7 @@ async def start(app: Client, msg: Message):
                     InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")
                 ],
                 [
-                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://gojo_bots_network.t.me/")
+                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://gojo_bots_network.t.me/") 
                 ],
             ]
         )
@@ -75,7 +75,7 @@ async def start(app: Client, msg: Message):
     add_user(msg.from_user.id)
 
 
-# Gcstart and id
+# Group start and id
 @app.on_message(filters.command("start") & filters.group)
 async def gc(app: Client, msg: Message):
     add_group(msg.chat.id)
@@ -84,7 +84,7 @@ async def gc(app: Client, msg: Message):
     await msg.reply_text(text=f"{msg.from_user.mention} Start Me In Private For More Info..", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Start Me In Private", url=f"https://t.me/{app.me.username}?start=start")]]))
 
 
-# stats
+# Stats
 @app.on_message(filters.command("stats") & filters.user(config.OWNER_ID))
 async def dbtool(app: Client, m: Message):
     xx = all_users()
@@ -110,21 +110,21 @@ async def fcast(c: Client, m: Message):
     for user in allusers:
         try:
             if m.media_group_id:
-                # Forward the media group without showing the "forwarded from" tag
-                await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                # Instead of forwarding the media, send the media as a message to the users
+                await c.send_media_group(user, media=repl_to.media_group)
                 success += 1
             else:
-                # Forward the message without showing the "forwarded from" tag
-                await repl_to.forward(user, hide_sender_name=True)
+                # Send the message content directly
+                await c.send_message(user, text=repl_to.text or repl_to.caption)
                 success += 1
         except FloodWait as ex:
             await asyncio.sleep(ex.value)
             try:
                 if m.media_group_id:
-                    await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                    await c.send_media_group(user, media=repl_to.media_group)
                     success += 1
                 else:
-                    await repl_to.forward(user, hide_sender_name=True)
+                    await c.send_message(user, text=repl_to.text or repl_to.caption)
                     success += 1
             except Exception as e:
                 print(f"Error while broadcast {e}")
@@ -141,7 +141,7 @@ async def fcast(c: Client, m: Message):
     await lel.edit(f"✅Successful Broadcast to {success} users.\n❌ Failed to {failed} users.\n👾 Found {blocked} Blocked users \n👻 Found {deactivated} Deactivated users.")
 
 
-# Add delay before accepting join request
+# Delay
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
 async def add_delay_before_accepting(_, m: Message):
     splited = m.command
