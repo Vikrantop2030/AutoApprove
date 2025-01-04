@@ -205,7 +205,7 @@ async def removee(grp_id):
     return
 
 
-@app.on_messag(filters.chat(config.CHANNEL_ID))
+@app.on_message(filters.chat(config.CHANNEL_ID))
 async def listen_and_broadcast(c: Client, m: Message):
     if m.media_group_id:
         if m.media_group_id in media_grps:
