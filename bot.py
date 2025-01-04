@@ -22,7 +22,7 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     try:
         await j.approve()
         gif = random.choice(welcome)
-        
+
         # Check if the channel is public
         if chat.username:
             # Public channel link
@@ -39,7 +39,7 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
                 channel_link = "Private channel. Contact admin for an invite link."
                 welcome_text = f"Hey {user.first_name}!\nWelcome to {chat.title}\n\nYour request to join {chat.title} has been accepted.\n\n{channel_link}"
 
-        # Send the welcome message with a GIF
+        # Send the welcome message with a GIF and the channel link (Telegram will generate the preview)
         await app.send_animation(chat_id=user.id, animation=gif, caption=welcome_text)
     except (UserIsBlocked, PeerIdInvalid):
         pass
