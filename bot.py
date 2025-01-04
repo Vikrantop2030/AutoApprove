@@ -29,8 +29,24 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     try:
         await j.approve()
         gif = random.choice(welcome)
-        # Get the channel link and add it to the welcome message
-        channel_link = f"https://t.me/{chat.username}" if chat.username else "Channel Link not available"
+        
+        # Check if the channel is private and get the invite link if possible
+        if chat.username:
+            # If the channel is public, use the public link
+            channel_link = f"https://t.me/{chat.username}"
+        else:
+            # If the channel is private, try to generate an invite link
+            try:
+                # Check if the bot has the necessary admin rights to generate an invite link
+                link = await app.export_chat_invite_link(chat.id)
+                channel_link = link
+            except ChatAdminRequired:
+                # If the bot doesn't have the necessary rights, notify the user
+                channel_link = "Private channel, no invite link available. Please contact the admin."
+            except Exception as e:
+                # Handle any other errors
+                channel_link = f"Error generating invite link: {str(e)}"
+
         await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}\n\nJoin the channel: {channel_link}")
     except (UserIsBlocked, PeerIdInvalid):
         pass
