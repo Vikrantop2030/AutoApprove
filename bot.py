@@ -16,7 +16,7 @@ from database import (add_accept_delay, add_group, add_user, all_groups,
 
 app = Client("Auto Approve Bot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN)
 
-welcome=[
+welcome = [
     "https://telegra.ph/file/51d04427815840250d03a.mp4",
     "https://telegra.ph/file/f41fddb95dceca7b09cbc.mp4",
     "https://telegra.ph/file/a66716c98fa50b2edd63d.mp4",
@@ -39,7 +39,7 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     return
 
 
-#approve 
+# Approve
 @app.on_chat_join_request()
 async def approval(app: Client, m: ChatJoinRequest):
     usr = m.from_user
@@ -54,23 +54,10 @@ async def approval(app: Client, m: ChatJoinRequest):
 
     asyncio.create_task(create_approve_task(app, m, Delay))
 
-    
 
-#pvtstart
+# Private start
 @app.on_message(filters.command("start") & filters.private)
 async def start(app: Client, msg: Message):
-    # if False:
-    #     try:
-    #         await app.get_chat_member(chat_id=config.CHANNEL, user_id=msg.from_user.id)
-    #         add_user(msg.from_user.id)
-    #         await msg.reply_photo(photo="https://telegra.ph/file/f394c45e5f2f147a37090.jpg", caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉︎ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs..",
-    #                              reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")], [InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://t.me/{config.CHANNEL}")]]))
-    #     except UserNotParticipant:
-    #         await msg.reply_text(text=f"To Use {app.me.mention}, You Must Subscribe To {(await app.get_chat(config.CHANNEL)).title}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Join", url=f"https://t.me/{config.CHANNEL}")], [InlineKeyboardButton ("Joined ✅", url=f"https://t.me/{app.me.username}?start=start")]]))
-    #     except ChatAdminRequired:
-    #         await app.send_message(text=f"I'm not admin in fsub chat, Ending fsub...", chat_id=config.OWNER_ID)
-    # else:
-    # add_user(msg.from_user.id)
     await msg.reply_photo(
         photo="https://telegra.ph/file/f394c45e5f2f147a37090.jpg",
         caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
@@ -86,9 +73,9 @@ async def start(app: Client, msg: Message):
         )
     )
     add_user(msg.from_user.id)
-    
 
-#Gcstart and id
+
+# Group start and id
 @app.on_message(filters.command("start") & filters.group)
 async def gc(app: Client, msg: Message):
     add_group(msg.chat.id)
@@ -96,23 +83,25 @@ async def gc(app: Client, msg: Message):
         add_user(msg.from_user.id)
     await msg.reply_text(text=f"{msg.from_user.mention} Start Me In Private For More Info..", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Start Me In Private", url=f"https://t.me/{app.me.username}?start=start")]]))
 
-#stats
+
+# Stats
 @app.on_message(filters.command("stats") & filters.user(config.OWNER_ID))
 async def dbtool(app: Client, m: Message):
     xx = all_users()
     x = all_groups()
     await m.reply_text(text=f"Stats for {app.me.mention}\n🙋‍♂️ Users : {xx}\n👥 Groups : {x}")
 
-#Broadcast
+
+# Broadcast
 @app.on_message(filters.command("fbroadcast") & filters.user(config.OWNER_ID))
-async def fcast(c: Client, m : Message):
+async def fcast(c: Client, m: Message):
     allusers = get_all_peers()
     lel = await m.reply_text("`⚡️ Processing...`")
     success = 0
     failed = 0
     deactivated = 0
-    repl_to = m.reply_to_message
     blocked = 0
+    repl_to = m.reply_to_message
     if not repl_to:
         await lel.edit_text("Please reply to a message")
         return
@@ -121,34 +110,38 @@ async def fcast(c: Client, m : Message):
     for user in allusers:
         try:
             if m.media_group_id:
-                await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                # Instead of forwarding the media, send the media as a message to the users
+                await c.send_media_group(user, media=repl_to.media_group)
                 success += 1
             else:
-                await repl_to.forward(user)
-                success +=1
+                # Send the message content directly
+                await c.send_message(user, text=repl_to.text or repl_to.caption)
+                success += 1
         except FloodWait as ex:
             await asyncio.sleep(ex.value)
             try:
                 if m.media_group_id:
-                    await c.forward_media_group(user, chat_id, _id)
+                    await c.send_media_group(user, media=repl_to.media_group)
                     success += 1
                 else:
-                    await repl_to.forward(user, hide_sender_name=True)
-                    success +=1
+                    await c.send_message(user, text=repl_to.text or repl_to.caption)
+                    success += 1
             except Exception as e:
                 print(f"Error while broadcast {e}")
                 continue
         except InputUserDeactivated:
-            deactivated +=1
+            deactivated += 1
             remove_user(user)
         except UserIsBlocked:
-            blocked +=1
+            blocked += 1
         except Exception as e:
             print(e)
-            failed +=1
+            failed += 1
 
     await lel.edit(f"✅Successful Broadcast to {success} users.\n❌ Failed to {failed} users.\n👾 Found {blocked} Blocked users \n👻 Found {deactivated} Deactivated users.")
-    
+
+
+# Delay
 @app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
 async def add_delay_before_accepting(_, m: Message):
     splited = m.command
@@ -176,10 +169,10 @@ async def add_delay_before_accepting(_, m: Message):
     return
 
 
-#run
+# Run
 print(f"Starting {app.name}")
 try:
     app.run()
-    print("Startd the bot")
+    print("Started the bot")
 except:
     traceback.print_exc()
