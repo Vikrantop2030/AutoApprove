@@ -1,183 +1,133 @@
 import asyncio
 import random
-import traceback
-
+import logging
 from pyrogram import Client, filters
-from pyrogram.errors import (ChatAdminRequired, FloodWait,
-                             InputUserDeactivated, PeerIdInvalid,
-                             UserIsBlocked, UserNotParticipant)
-from pyrogram.types import (ChatJoinRequest, InlineKeyboardButton,
-                            InlineKeyboardMarkup, Message)
+from pyrogram.types import ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.errors import UserIsBlocked, PeerIdInvalid, InputUserDeactivated, FloodWait
 
-import config
-from database import (add_accept_delay, add_group, add_user, all_groups,
-                      all_users, already_dbg, get_adelay, get_all_peers,
-                      remove_user)
-
-app = Client("Auto Approve Bot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN)
-
-welcome = [
+# Configurations
+API_ID = "your_api_id"
+API_HASH = "your_api_hash"
+BOT_TOKEN = "your_bot_token"
+OWNER_ID = 123456789  # Your Telegram user ID
+WELCOME_GIFS = [
     "https://i.ibb.co/MNH8176/logo.jpg",
     "https://i.ibb.co/MNH8176/logo.jpg",
-    "https://i.ibb.co/MNH8176/logo.jpg",
-    "https://i.ibb.co/MNH8176/logo.jpg",
+    "https://i.ibb.co/MNH8176/logo.jpg"
 ]
+DEFAULT_DELAY = 10  # Seconds
 
-def_delay = config.DELAY
+# Initialize Bot
+app = Client("AutoApproveBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int):
-    await asyncio.sleep(after_delay)
-    chat = j.chat
-    user = j.from_user
+# Configure Logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# In-memory storage (replace with a proper database)
+groups = {}
+users = set()
+
+# Helper Functions
+def add_group(group_id: int):
+    """Add a group to the tracked groups."""
+    if group_id not in groups:
+        groups[group_id] = DEFAULT_DELAY
+
+def add_user(user_id: int):
+    """Add a user to the tracked users."""
+    users.add(user_id)
+
+def set_delay(group_id: int, delay: int):
+    """Set a custom delay for a group."""
+    if group_id in groups:
+        groups[group_id] = delay
+
+def get_delay(group_id: int):
+    """Get the delay for a group."""
+    return groups.get(group_id, DEFAULT_DELAY)
+
+# Bot Commands and Handlers
+@app.on_chat_join_request()
+async def auto_approve_request(client: Client, join_request: ChatJoinRequest):
+    """Automatically approve join requests after a delay."""
+    group_id = join_request.chat.id
+    user = join_request.from_user
+    delay = get_delay(group_id)
+
+    logger.info(f"Received join request from {user.id} for group {group_id}. Delay: {delay}s")
+
+    await asyncio.sleep(delay)
+
     try:
-        await j.approve()
-        gif = random.choice(welcome)
-        await app.send_animation(
+        await join_request.approve()
+        gif = random.choice(WELCOME_GIFS)
+        await client.send_animation(
             chat_id=user.id,
             animation=gif,
-            caption=f"🎉 Hey {user.first_name}, welcome to {chat.title}! 🎉\n\nWe’re excited to have you join us here. Your request to join {chat.title} has been successfully approved by {app.me.first_name}. 😊\n\nFeel free to explore, engage with the community, and have fun! 🚀\n\nMake sure to check out our [Channel](https://t.me/{config.CHANNEL}) for updates and more."
+            caption=f"Welcome, {user.first_name}!\nYour request to join '{join_request.chat.title}' has been approved!"
         )
+        logger.info(f"Approved {user.id}'s request for group {group_id}")
     except (UserIsBlocked, PeerIdInvalid):
-        pass
+        logger.warning(f"Failed to notify {user.id}")
+    except Exception as e:
+        logger.error(f"Error approving request for {user.id}: {e}")
 
-    return
-
-
-# Approve 
-@app.on_chat_join_request()
-async def approval(app: Client, m: ChatJoinRequest):
-    usr = m.from_user
-    cht = m.chat
-    global def_delay
-    Delay = get_adelay(cht.id)
-    if not Delay:
-        add_accept_delay(cht.id, def_delay)
-        Delay = def_delay
-    add_group(cht.id)
-    add_user(usr.id)
-
-    asyncio.create_task(create_approve_task(app, m, Delay))
-
-
-# Private start
 @app.on_message(filters.command("start") & filters.private)
-async def start(app: Client, msg: Message):
-    await msg.reply_photo(
-        photo="https://i.ibb.co/MNH8176/logo.jpg",
-        caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉︎ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.first_name} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.\n\nFeel free to join our [Channel](https://t.me/{config.CHANNEL}) for more info.",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")
-                ],
-                [
-                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://t.me/{config.CHANNEL}")
-                ],
-            ]
-        )
+async def start_command(client: Client, message: Message):
+    """Handle the /start command in private chat."""
+    add_user(message.from_user.id)
+    await message.reply_photo(
+        photo=random.choice(WELCOME_GIFS),
+        caption="👋 Hello! I'm here to automatically approve join requests for your group or channel.\n\n"
+                "➡️ Add me to a group or channel and make me an admin with invite permissions.",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Add Me to a Group", url=f"https://t.me/{app.me.username}?startgroup=true")]
+        ])
     )
-    add_user(msg.from_user.id)
 
+@app.on_message(filters.command("setdelay") & filters.user(OWNER_ID))
+async def set_delay_command(client: Client, message: Message):
+    """Set the delay for auto-approving join requests."""
+    try:
+        _, group_id, delay = message.text.split()
+        group_id = int(group_id)
+        delay = int(delay)
+        set_delay(group_id, delay)
+        await message.reply(f"✅ Delay set to {delay} seconds for group ID {group_id}.")
+    except ValueError:
+        await message.reply("❌ Invalid command format. Use: /setdelay <group_id> <delay_in_seconds>")
 
-# Gcstart and id
-@app.on_message(filters.command("start") & filters.group)
-async def gc(app: Client, msg: Message):
-    add_group(msg.chat.id)
-    if msg.from_user:
-        add_user(msg.from_user.id)
-    await msg.reply_text(text=f"{msg.from_user.mention} Start Me In Private For More Info..", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Start Me In Private", url=f"https://t.me/{app.me.username}?start=start")]]))
+@app.on_message(filters.command("stats") & filters.user(OWNER_ID))
+async def stats_command(client: Client, message: Message):
+    """Display bot statistics."""
+    await message.reply(
+        f"📊 **Bot Stats**:\n\n"
+        f"👥 Groups: {len(groups)}\n"
+        f"🙋‍♂️ Users: {len(users)}"
+    )
 
-# Stats
-@app.on_message(filters.command("stats") & filters.user(config.OWNER_ID))
-async def dbtool(app: Client, m: Message):
-    xx = all_users()
-    x = all_groups()
-    await m.reply_text(text=f"Stats for {app.me.mention}\n🙋‍♂️ Users : {xx}\n👥 Groups : {x}")
+@app.on_message(filters.command("broadcast") & filters.user(OWNER_ID))
+async def broadcast_command(client: Client, message: Message):
+    """Broadcast a message to all users."""
+    if not message.reply_to_message:
+        await message.reply("❌ Reply to a message to broadcast it.")
+        return
 
-# Broadcast
-@app.on_message(filters.command("fbroadcast") & filters.user(config.OWNER_ID))
-async def fcast(c: Client, m: Message):
-    allusers = get_all_peers()
-    lel = await m.reply_text("⚡️ Processing...")
-    success, failed, deactivated, blocked = 0, 0, 0, 0
+    broadcast_message = message.reply_to_message
+    success, failed = 0, 0
 
-    # Check if there's a reply message, otherwise use the original message.
-    if m.reply_to_message:
-        broadcast_msg = m.reply_to_message  # Use the message being replied to.
-    else:
-        # Strip the command and take the rest of the text in the message
-        broadcast_msg_text = m.text.split(" ", 1)[1] if len(m.text.split(" ", 1)) > 1 else None
-        if broadcast_msg_text:
-            broadcast_msg_text = broadcast_msg_text  # Use just the text after the command
-        else:
-            await lel.edit_text("❌ No message content found after the command.")
-            return
-
-    # Broadcast the message to all users
-    for user in allusers:
+    for user_id in users:
         try:
-            if broadcast_msg_text:
-                # Send the stripped text message to user
-                await c.send_message(
-                    chat_id=user,
-                    text=broadcast_msg_text,
-                    parse_mode=None  # Temporarily disabled parse mode
-                )
-            else:
-                failed += 1
-                continue  # Skip users for unsupported media types.
+            await client.forward_messages(user_id, from_chat_id=broadcast_message.chat.id, message_ids=broadcast_message.id)
             success += 1
-        except FloodWait as ex:
-            await asyncio.sleep(ex.value)
-        except InputUserDeactivated:
-            deactivated += 1
-            remove_user(user)
-        except UserIsBlocked:
-            blocked += 1
         except Exception as e:
-            print(f"Error for user {user}: {e}")
+            logger.warning(f"Failed to send message to {user_id}: {e}")
             failed += 1
 
-    # After processing, update the user with the result
-    await lel.edit_text(
-        f"✅ Successfully broadcast to {success} users.\n"
-        f"❌ Failed for {failed} users.\n"
-        f"👾 Found {blocked} blocked users.\n"
-        f"👻 Found {deactivated} deactivated users."
-    )
+    await message.reply(f"✅ Broadcast completed.\nSuccess: {success}\nFailed: {failed}")
 
-
-@app.on_message(filters.command("delay") & filters.user(config.OWNER_ID))
-async def add_delay_before_accepting(_, m: Message):
-    splited = m.command
-    if len(m.command) != 3:
-        await m.reply_text("**USAGE**\n/delay [chat id] [delay in seconds]")
-        return
-    
-    try:
-        chat_id = int(splited[1])
-        delay = int(splited[2])
-    except:
-        await m.reply_text("Chat id and delay should be integer")
-        return
-    
-    if not already_dbg(chat_id):
-        await m.reply_text("This chat id doesn't exist in my database")
-        return
-    
-    timee = add_accept_delay(chat_id, delay)
-    if timee:
-        await m.reply_text(f"Updated delay from {timee} seconds to {delay} seconds")
-        return
-    
-    await m.reply_text(f"Added delay of {delay} seconds before accepting join request")
-    return
-
-
-# Run
-print(f"Starting {app.name}")
-try:
+# Run Bot
+if __name__ == "__main__":
+    logger.info("Bot is starting...")
     app.run()
-    print("Started the bot")
-except:
-    traceback.print_exc()
