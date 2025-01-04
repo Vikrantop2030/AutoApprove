@@ -1,7 +1,6 @@
 import asyncio
 import random
 import traceback
-
 from pyrogram import Client, filters
 from pyrogram.errors import (ChatAdminRequired, FloodWait,
                              InputUserDeactivated, PeerIdInvalid,
@@ -35,6 +34,7 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
         await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}")
     except (UserIsBlocked, PeerIdInvalid):
         pass
+
     return
 
 
@@ -50,6 +50,7 @@ async def approval(app: Client, m: ChatJoinRequest):
         Delay = def_delay
     add_group(cht.id)
     add_user(usr.id)
+
     asyncio.create_task(create_approve_task(app, m, Delay))
 
 
@@ -65,7 +66,7 @@ async def start(app: Client, msg: Message):
                     InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")
                 ],
                 [
-                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://gojo_bots_network.t.me/"),
+                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://gojo_bots_network.t.me/")
                 ],
             ]
         )
@@ -100,42 +101,12 @@ async def fcast(c: Client, m: Message):
     deactivated = 0
     blocked = 0
     repl_to = m.reply_to_message
-    if not repl_to:
-        await lel.edit_text("Please reply to a message")
-        return
-    _id = repl_to.id
-    chat_id = m.chat.id
-    for user in allusers:
-        try:
-            # Check if message is a media group (like a GIF or other media group)
-            if repl_to.media:
-                if repl_to.media_group_id:
-                    # Send media group to users
-                    await c.send_media_group(user, media=repl_to.media_group)
-                    success += 1
-                else:
-                    # For single media, send directly (GIF, video, etc.)
-                    if repl_to.video:
-                        if isinstance(repl_to.video.file_id, str):
-                            # Send video by file_id or URL if file_id is a string
-                            await c.send_video(user, video=repl_to.video.file_id, caption=repl_to.caption)
-                        else:
-                            await c.send_video(user, video=repl_to.video, caption=repl_to.caption)
-                    elif repl_to.animation:
-                        if isinstance(repl_to.animation.file_id, str):
-                            # Send animation by file_id or URL if file_id is a string
-                            await c.send_animation(user, animation=repl_to.animation.file_id, caption=repl_to.caption)
-                        else:
-                            await c.send_animation(user, animation=repl_to.animation, caption=repl_to.caption)
-                    else:
-                        await c.send_message(user, text=repl_to.text or repl_to.caption)
-                    success += 1
-            else:
-                # Handle the case where it's a text message or empty media
-                await c.send_message(user, text=repl_to.text or repl_to.caption)
-                success += 1
-        except FloodWait as ex:
-            await asyncio.sleep(ex.value)
+
+    if repl_to:
+        # Broadcast using the replied message
+        _id = repl_to.id
+        chat_id = m.chat.id
+        for user in allusers:
             try:
                 if repl_to.media_group_id:
                     await c.send_media_group(user, media=repl_to.media_group)
@@ -143,22 +114,54 @@ async def fcast(c: Client, m: Message):
                 else:
                     await c.send_message(user, text=repl_to.text or repl_to.caption)
                     success += 1
+            except FloodWait as ex:
+                await asyncio.sleep(ex.value)
+                try:
+                    if repl_to.media_group_id:
+                        await c.send_media_group(user, media=repl_to.media_group)
+                        success += 1
+                    else:
+                        await c.send_message(user, text=repl_to.text or repl_to.caption)
+                        success += 1
+                except Exception as e:
+                    print(f"Error while broadcast {e}")
+                    continue
+            except InputUserDeactivated:
+                deactivated += 1
+                remove_user(user)
+            except UserIsBlocked:
+                blocked += 1
             except Exception as e:
-                print(f"Error while broadcasting: {e}")
-                continue
-        except InputUserDeactivated:
-            deactivated += 1
-            remove_user(user)
-        except UserIsBlocked:
-            blocked += 1
-        except PeerIdInvalid:
-            # Skip users with invalid peer IDs
-            continue
-        except Exception as e:
-            print(f"Unexpected error while broadcasting: {e}")
-            failed += 1
+                print(e)
+                failed += 1
+    else:
+        # Broadcast using the content of the current message itself
+        text_to_broadcast = m.text.split(' ', 1)[1] if len(m.text.split(' ', 1)) > 1 else ""
+        if not text_to_broadcast:
+            await lel.edit_text("Please provide a message to broadcast")
+            return
+        for user in allusers:
+            try:
+                await c.send_message(user, text=text_to_broadcast)
+                success += 1
+            except FloodWait as ex:
+                await asyncio.sleep(ex.value)
+                try:
+                    await c.send_message(user, text=text_to_broadcast)
+                    success += 1
+                except Exception as e:
+                    print(f"Error while broadcast {e}")
+                    continue
+            except InputUserDeactivated:
+                deactivated += 1
+                remove_user(user)
+            except UserIsBlocked:
+                blocked += 1
+            except Exception as e:
+                print(e)
+                failed += 1
 
-    await lel.edit(f"✅ Successful Broadcast to {success} users.\n❌ Failed to {failed} users.\n👾 Found {blocked} Blocked users \n👻 Found {deactivated} Deactivated users.")
+    await lel.edit(f"✅Successful Broadcast to {success} users.\n❌ Failed to {failed} users.\n👾 Found {blocked} Blocked users \n👻 Found {deactivated} Deactivated users.")
 
 
 # Delay
