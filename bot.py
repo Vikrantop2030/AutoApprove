@@ -34,20 +34,30 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
         if chat.username:
             # If the channel is public, use the public link
             channel_link = f"https://t.me/{chat.username}"
+            # Add an inline button to join the channel
+            buttons = [
+                [InlineKeyboardButton("Join Channel", url=channel_link)]
+            ]
+            # Send the welcome message with a channel preview
+            welcome_text = f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}\n\nClick below to join the channel:"
         else:
             # If the channel is private, try to generate an invite link
             try:
                 # Check if the bot has the necessary admin rights to generate an invite link
                 link = await app.export_chat_invite_link(chat.id)
                 channel_link = link
+                buttons = [
+                    [InlineKeyboardButton("Join Channel", url=channel_link)]
+                ]
+                welcome_text = f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}\n\nClick below to join the private channel:"
             except ChatAdminRequired:
                 # If the bot doesn't have the necessary rights, notify the user
                 channel_link = "Private channel, no invite link available. Please contact the admin."
-            except Exception as e:
-                # Handle any other errors
-                channel_link = f"Error generating invite link: {str(e)}"
+                buttons = []
+                welcome_text = f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}\n\n{channel_link}"
 
-        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}\n\nJoin the channel: {channel_link}")
+        # Send the welcome message with the appropriate inline button and channel link
+        await app.send_animation(chat_id=user.id, animation=gif, caption=welcome_text, reply_markup=InlineKeyboardMarkup(buttons))
     except (UserIsBlocked, PeerIdInvalid):
         pass
 
