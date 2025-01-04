@@ -31,7 +31,12 @@
     "CHANNEL": {
       "description": "Enter your Force Subscribe channel Username without @",
       "required": false,
-      "value":"ZenBotX"
+      "value":""
+    },
+    "Channel_ID": {
+      "description": "Enter your channel id from where you want to broadcast posts",
+      "required": true,
+      "value":""
     },
     "FSUB": {
       "description": "True For Enabling Else False",
@@ -40,7 +45,7 @@
     "OWNER_ID": {
       "description": "Enter Bot Owners IDS",
       "required": true,
-      "value":"6542673293"
+      "value":"7969292389"
     },
     "DELAY": {
       "description": "Delay in seconds before channel join request should be accepted",
