@@ -29,13 +29,16 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     try:
         await j.approve()
         gif = random.choice(welcome)
-        # Show inline button to the channel
+        
+        # Generate the inline button with the channel preview
         join_button = InlineKeyboardButton("Click to View Channel", url=f"https://t.me/{chat.username}") if chat.username else None
         
-        # If the channel is private, show the invite link instead
+        # If the channel is private, show the invite link instead with the "Join" button
         if not join_button:
-            join_button = InlineKeyboardButton("Click to View Channel", url=f"https://t.me/{app.me.username}?startgroup=true")
+            invite_link = await app.export_chat_invite_link(chat.id)  # Private channel invite link
+            join_button = InlineKeyboardButton("Click to View Channel", url=invite_link)
         
+        # Send the welcome message with the preview and inline button
         await app.send_animation(
             chat_id=user.id, 
             animation=gif, 
