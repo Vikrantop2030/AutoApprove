@@ -32,7 +32,11 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     try:
         await j.approve()
         gif = random.choice(welcome)
-        await app.send_animation(chat_id=user.id, animation=gif, caption=f"🎉 Hey {user.first_name}, welcome to {chat.title}! 🎉\n\nWe’re excited to have you join us here. Your request to join {chat.title} has been successfully approved by {app.me.first_name}. 😊\n\nFeel free to explore, engage with the community, and have fun! 🚀")
+        await app.send_animation(
+            chat_id=user.id,
+            animation=gif,
+            caption=f"🎉 Hey {user.first_name}, welcome to {chat.title}! 🎉\n\nWe’re excited to have you join us here. Your request to join {chat.title} has been successfully approved by {app.me.first_name}. 😊\n\nFeel free to explore, engage with the community, and have fun! 🚀\n\nMake sure to check out our [Channel](https://t.me/{config.CHANNEL}) for updates and more."
+        )
     except (UserIsBlocked, PeerIdInvalid):
         pass
 
@@ -58,28 +62,16 @@ async def approval(app: Client, m: ChatJoinRequest):
 # Private start
 @app.on_message(filters.command("start") & filters.private)
 async def start(app: Client, msg: Message):
-    # if False:
-    #     try:
-    #         await app.get_chat_member(chat_id=config.CHANNEL, user_id=msg.from_user.id)
-    #         add_user(msg.from_user.id)
-    #         await msg.reply_photo(photo="https://telegra.ph/file/f394c45e5f2f147a37090.jpg", caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉︎ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs..",
-    #                              reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")], [InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://t.me/{config.CHANNEL}")]]))
-    #     except UserNotParticipant:
-    #         await msg.reply_text(text=f"To Use {app.me.mention}, You Must Subscribe To {(await app.get_chat(config.CHANNEL)).title}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Join", url=f"https://t.me/{config.CHANNEL}")], [InlineKeyboardButton ("Joined ✅", url=f"https://t.me/{app.me.username}?start=start")]]))
-    #     except ChatAdminRequired:
-    #         await app.send_message(text=f"I'm not admin in fsub chat, Ending fsub...", chat_id=config.OWNER_ID)
-    # else:
-    # add_user(msg.from_user.id)
     await msg.reply_photo(
         photo="https://i.ibb.co/MNH8176/logo.jpg",
-        caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉︎ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.first_name} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
+        caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉︎ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.first_name} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.\n\nFeel free to join our [Channel](https://t.me/{config.CHANNEL}) for more info.",
         reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")
                 ],
                 [
-                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://i.ibb.co/MNH8176/logo.jpg/")
+                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://t.me/{config.CHANNEL}")
                 ],
             ]
         )
