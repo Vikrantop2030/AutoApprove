@@ -16,7 +16,7 @@ from database import (add_accept_delay, add_group, add_user, all_groups,
 
 app = Client("Auto Approve Bot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN)
 
-welcome=[
+welcome = [
     "https://i.ibb.co/MNH8176/logo.jpg",
     "https://i.ibb.co/MNH8176/logo.jpg",
     "https://i.ibb.co/MNH8176/logo.jpg",
@@ -32,14 +32,14 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     try:
         await j.approve()
         gif = random.choice(welcome)
-        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}")
+        await app.send_animation(chat_id=user.id, animation=gif, caption=f"🎉 Hey {user.first_name}, welcome to {chat.title}! 🎉\n\nWe’re excited to have you join us here. Your request to join {chat.title} has been successfully approved by {app.me.first_name}. 😊\n\nFeel free to explore, engage with the community, and have fun! 🚀")
     except (UserIsBlocked, PeerIdInvalid):
         pass
 
     return
 
 
-#approve 
+# Approve 
 @app.on_chat_join_request()
 async def approval(app: Client, m: ChatJoinRequest):
     usr = m.from_user
@@ -54,9 +54,8 @@ async def approval(app: Client, m: ChatJoinRequest):
 
     asyncio.create_task(create_approve_task(app, m, Delay))
 
-    
 
-#pvtstart
+# Private start
 @app.on_message(filters.command("start") & filters.private)
 async def start(app: Client, msg: Message):
     # if False:
@@ -73,7 +72,7 @@ async def start(app: Client, msg: Message):
     # add_user(msg.from_user.id)
     await msg.reply_photo(
         photo="https://i.ibb.co/MNH8176/logo.jpg",
-        caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
+        caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉︎ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.first_name} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
         reply_markup=InlineKeyboardMarkup(
             [
                 [
@@ -86,9 +85,9 @@ async def start(app: Client, msg: Message):
         )
     )
     add_user(msg.from_user.id)
-    
 
-#Gcstart and id
+
+# Gcstart and id
 @app.on_message(filters.command("start") & filters.group)
 async def gc(app: Client, msg: Message):
     add_group(msg.chat.id)
@@ -96,14 +95,14 @@ async def gc(app: Client, msg: Message):
         add_user(msg.from_user.id)
     await msg.reply_text(text=f"{msg.from_user.mention} Start Me In Private For More Info..", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Start Me In Private", url=f"https://t.me/{app.me.username}?start=start")]]))
 
-#stats
+# Stats
 @app.on_message(filters.command("stats") & filters.user(config.OWNER_ID))
 async def dbtool(app: Client, m: Message):
     xx = all_users()
     x = all_groups()
     await m.reply_text(text=f"Stats for {app.me.mention}\n🙋‍♂️ Users : {xx}\n👥 Groups : {x}")
 
-#Broadcast
+# Broadcast
 @app.on_message(filters.command("fbroadcast") & filters.user(config.OWNER_ID))
 async def fcast(c: Client, m: Message):
     allusers = get_all_peers()
@@ -183,10 +182,10 @@ async def add_delay_before_accepting(_, m: Message):
     return
 
 
-#run
+# Run
 print(f"Starting {app.name}")
 try:
     app.run()
-    print("Startd the bot")
+    print("Started the bot")
 except:
     traceback.print_exc()
