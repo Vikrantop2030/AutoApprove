@@ -29,7 +29,9 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     try:
         await j.approve()
         gif = random.choice(welcome)
-        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}")
+        # Get the channel link and add it to the welcome message
+        channel_link = f"https://t.me/{chat.username}" if chat.username else "Channel Link not available"
+        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}\n\nJoin the channel: {channel_link}")
     except (UserIsBlocked, PeerIdInvalid):
         pass
 
