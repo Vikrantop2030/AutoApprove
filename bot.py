@@ -239,7 +239,7 @@ async def callbackss(c: Client, q: CallbackQuery):
         is_grp, id_ = q.data.split(":")
         is_grp = False if is_grp == "sol" else True
         
-    success, failed, deactivated, blocked = await broadcaster(c, config.CHANNEL_ID, id_, is_grp)
+    success, failed, deactivated, blocked = await broadcaster(c, config.CHANNEL_ID, int(id_), is_grp)
     to_edit = await q.edit_message_text("Broadcasting this message")
     await to_edit.edit_text(f"✅Successful Broadcast to {success} users.\n❌ Failed to {failed} users.\n👾 Found {blocked} Blocked users \n👻 Found {deactivated} Deactivated users.")
     return
