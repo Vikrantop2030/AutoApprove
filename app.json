@@ -53,6 +53,10 @@
     "DELAY": {
       "description": "Delay in seconds before channel join request should be accepted",
       "required": false
+    },
+    "START_PIC": {
+      "description": "Link of the photo you want to use as start pic make sure it is telegraph link or any other link which can be directly accessed by the link",
+      "required": false
     }
         
   },

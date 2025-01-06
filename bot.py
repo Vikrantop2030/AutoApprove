@@ -2,7 +2,7 @@ import asyncio
 import random
 import traceback
 
-from pyrogram import Client, compose, filters, idle
+from pyrogram import Client, filters, idle
 from pyrogram.errors import (ChatAdminRequired, FloodPremiumWait, FloodWait,
                              InputUserDeactivated, PeerIdInvalid,
                              SessionExpired, SessionRevoked, UserIsBlocked,
@@ -18,6 +18,7 @@ from database import (add_accept_delay, add_group, add_user, all_groups,
 
 app = Client("Auto Approve Bot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN)
 
+
 userApp = False
 if config.SESSION:
     userApp = Client(
@@ -26,6 +27,16 @@ if config.SESSION:
         api_hash=config.API_HASH,
         session_string=config.SESSION
     )
+
+print(f"Staring {app.name}")
+app.start()
+print(f"Started {app.name} on @{app.me.username}")
+if userApp:
+    print("Starting user bot")
+    userApp.start()
+    print(f"Started user bot ont {('@'+userApp.me.username) if userApp.me.username else userApp.me.id}")
+print("Started both bots now u can use me")
+
 
 welcome=[
     "https://telegra.ph/file/51d04427815840250d03a.mp4",
@@ -40,19 +51,40 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     await asyncio.sleep(after_delay)
     chat = j.chat
     user = j.from_user
-    try:
-        await j.approve()
-        link = ("@"+chat.username) if chat.username else chat.invite_link
-        kb = [
-            [
-                InlineKeyboardButton(f"{chat.title}", url=link)
-            ]
+    link = ("@"+chat.username) if chat.username else chat.invite_link
+    kb = [
+        [
+            InlineKeyboardButton(f"{chat.title}", url=link)
         ]
-        gif = random.choice(welcome)
+    ]
+    gif = random.choice(welcome)
+    approved = False
+    msg_sent = False
+    try:
+        approved = await j.approve()
         await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}", reply_markup=InlineKeyboardMarkup(kb))
-    except (UserIsBlocked, PeerIdInvalid):
+        msg_sent = True
+    except:
         pass
-
+    
+    if not userApp:
+        if not approved:
+            print(f"Failed to approve join request of {user.id}")
+        if not msg_sent:
+            print(f"Failed to send message to this user")
+        return
+    
+    if not approved:
+        try:
+            await userApp.approve_chat_join_request(chat.id, user.id)
+        except:
+            print(f"Failed to approve join request of {user.id}")
+    if not msg_sent:
+        try:
+            userApp.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}", reply_markup=InlineKeyboardMarkup(kb))
+        except:
+            pass
+    
     return
 
 
@@ -89,16 +121,13 @@ async def start(app: Client, msg: Message):
     # else:
     # add_user(msg.from_user.id)
     await msg.reply_photo(
-        photo="https://telegra.ph/file/f394c45e5f2f147a37090.jpg",
+        photo=config.START_PIC,
         caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
         reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(f"ᴀᴅᴅ {app.me.first_name}", url=f"https://t.me/{app.me.username}?startgroup=true")
-                ],
-                [
-                    InlineKeyboardButton("ᴄʜᴀɴɴᴇʟ", url=f"https://gojo_bots_network.t.me/")
-                ],
+                ]
             ]
         )
     )
@@ -124,6 +153,7 @@ async def dbtool(app: Client, m: Message):
 #Boradcast creator
 async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
     allusers = get_all_peers()
+    global userApp
     success = 0
     failed = 0
     deactivated = 0
@@ -164,6 +194,7 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
                         success +=1
                 except (SessionExpired, SessionRevoked):
                     c = app
+                    userApp = False
                     print("Userbot session expired")
                     allusers.append(user)
                 except Exception as e:
@@ -195,6 +226,7 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
                 continue
         except (SessionExpired, SessionRevoked):
             c = app
+            userApp = False
             print("Userbot session expired")
             allusers.append(user)
         except Exception as e:
@@ -256,6 +288,32 @@ async def add_delay_before_accepting(_, m: Message):
 
 media_grps = []
 
+@app.on_message(filters.command("acceptall") & filters.user(config.OWNER_ID))
+async def accept_all_pending(_, m: Message):
+    if not userApp:
+        await m.reply_text("Please configure your session to use the command")
+        return
+    try:
+        c_id = int(m.command[1])
+    except ValueError:
+        await m.reply_text("Channel id should be integer")
+        return
+    except IndexError:
+        await m.reply_text("Please provide me channel id")
+        return
+
+    to_edit = await m.reply_text("Accepting all the pending join request")
+    try:
+        accepted = await userApp.approve_all_chat_join_requests(c_id)
+        if accepted:
+            await to_edit.edit_text("Approved all the pending request in the channel")
+            return
+        to_edit.edit_text("Failed to approve join requests")
+    except Exception as e:
+        await to_edit.edit_text(f"Make sure {userApp.me.mention} is admin in the provided channel\nError: {e}")
+        traceback.print_exc()
+
+
 async def removee(grp_id):
     await asyncio.sleep(300)
     try:
@@ -308,18 +366,10 @@ async def callbackss(c: Client, q: CallbackQuery):
 
 
 #run
-async def main():
-    print(f"Staring {app.name}")
-    await app.start()
-    print(f"Started {app.name} on @{app.me.username}")
-    if userApp:
-        print("Starting user bot")
-        await userApp.start()
-        print(f"Started user bot ont {('@'+userApp.me.username) if userApp.me.username else userApp.me.id}")
-    print("Started both bots now u can use me")
-    await idle()
-print(f"Starting")
-try:
-    asyncio.run(main)
-except:
-    traceback.print_exc()
+# async def main():
+idle()
+# print(f"Starting")
+# try:
+#     asyncio.run(main())
+# except:
+#     traceback.print_exc()
