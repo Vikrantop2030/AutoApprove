@@ -162,17 +162,13 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
     if userApp:
         c = userApp
         try:
-            await c.send_message(config.OWNER_ID, "Using userbot to send messages")
+            await app.send_message(config.OWNER_ID, "Using userbot to send messages")
         except (SessionExpired, SessionRevoked):
             print("Userbot session expired")
             c = app
-        except PeerIdInvalid:
-            try:
-                resolved = await c.resolve_peer(config.OWNER_ID)
-                await c.send_message(resolved.user_id, "Using userbot to send messages")
-            except:
-                traceback.print_exc()
-                c = app
+        except:
+            traceback.print_exc()
+            pass
     for user in allusers:
         try:
             if media_grp:
