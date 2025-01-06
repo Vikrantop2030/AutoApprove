@@ -81,6 +81,7 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
             print(f"Failed to approve join request of {user.id}")
     if not msg_sent:
         try:
+            kb.append([InlineKeyboardButton("Start the bot", url=f"https://t.me/{app.me.username}")])
             userApp.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}", reply_markup=InlineKeyboardMarkup(kb))
         except:
             pass
@@ -165,6 +166,13 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
         except (SessionExpired, SessionRevoked):
             print("Userbot session expired")
             c = app
+        except PeerIdInvalid:
+            try:
+                resolved = await c.resolve_peer(config.OWNER_ID)
+                await c.send_message(resolved.user_id, "Using userbot to send messages")
+            except:
+                traceback.print_exc()
+                c = app
     for user in allusers:
         try:
             if media_grp:
