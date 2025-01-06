@@ -2,10 +2,11 @@ import asyncio
 import random
 import traceback
 
-from pyrogram import Client, filters
-from pyrogram.errors import (ChatAdminRequired, FloodWait,
+from pyrogram import Client, compose, filters, idle
+from pyrogram.errors import (ChatAdminRequired, FloodPremiumWait, FloodWait,
                              InputUserDeactivated, PeerIdInvalid,
-                             UserIsBlocked, UserNotParticipant)
+                             SessionExpired, SessionRevoked, UserIsBlocked,
+                             UserNotParticipant)
 from pyrogram.types import (CallbackQuery, ChatJoinRequest,
                             InlineKeyboardButton, InlineKeyboardMarkup,
                             Message)
@@ -16,6 +17,15 @@ from database import (add_accept_delay, add_group, add_user, all_groups,
                       remove_user)
 
 app = Client("Auto Approve Bot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN)
+
+userApp = False
+if config.SESSION:
+    userApp = Client(
+        "USER",
+        api_id=config.API_ID,
+        api_hash=config.API_HASH,
+        session_string=config.SESSION
+    )
 
 welcome=[
     "https://telegra.ph/file/51d04427815840250d03a.mp4",
@@ -32,8 +42,14 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     user = j.from_user
     try:
         await j.approve()
+        link = ("@"+chat.username) if chat.username else chat.invite_link
+        kb = [
+            [
+                InlineKeyboardButton(f"{chat.title}", url=link)
+            ]
+        ]
         gif = random.choice(welcome)
-        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}")
+        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}", reply_markup=InlineKeyboardMarkup(kb))
     except (UserIsBlocked, PeerIdInvalid):
         pass
 
@@ -112,6 +128,13 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
     failed = 0
     deactivated = 0
     blocked = 0
+    if userApp:
+        c = userApp
+        try:
+            await c.send_message(config.OWNER_ID, "Using userbot to send messages")
+        except (SessionExpired, SessionRevoked):
+            print("Userbot session expired")
+            c = app
     for user in allusers:
         try:
             if media_grp:
@@ -120,7 +143,7 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
             else:
                 await c.forward_messages(user, chat_id, _id, hide_sender_name=True)
                 success +=1
-        except FloodWait as ex:
+        except (FloodWait, FloodPremiumWait) as ex:
             await asyncio.sleep(ex.value)
             try:
                 if media_grp:
@@ -129,16 +152,54 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
                 else:
                     await c.forward_messages(user, chat_id, _id, hide_sender_name=True)
                     success +=1
+            except PeerIdInvalid:
+                try:
+                    resolved = await c.resolve_peer(user)
+                    user = resolved.user_id
+                    if media_grp:
+                        await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                        success += 1
+                    else:
+                        await c.forward_messages(user, chat_id, _id, hide_sender_name=True)
+                        success +=1
+                except (SessionExpired, SessionRevoked):
+                    c = app
+                    print("Userbot session expired")
+                    allusers.append(user)
+                except Exception as e:
+                    print(f"Error while broadcast {e}")
+                    traceback.print_exc()
+                    continue
             except Exception as e:
                 print(f"Error while broadcast {e}")
+                traceback.print_exc()
                 continue
         except InputUserDeactivated:
             deactivated +=1
             remove_user(user)
         except UserIsBlocked:
             blocked +=1
+        except PeerIdInvalid:
+            try:
+                resolved = await c.resolve_peer(user)
+                user = resolved.user_id
+                if media_grp:
+                    await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                    success += 1
+                else:
+                    await c.forward_messages(user, chat_id, _id, hide_sender_name=True)
+                    success +=1
+            except Exception as e:
+                print(f"Error while broadcast {e}")
+                traceback.print_exc()
+                continue
+        except (SessionExpired, SessionRevoked):
+            c = app
+            print("Userbot session expired")
+            allusers.append(user)
         except Exception as e:
             print(e)
+            traceback.print_exc()
             failed +=1
 
     return success, failed, deactivated, blocked
@@ -247,9 +308,18 @@ async def callbackss(c: Client, q: CallbackQuery):
 
 
 #run
-print(f"Starting {app.name}")
+async def main():
+    print(f"Staring {app.name}")
+    await app.start()
+    print(f"Started {app.name} on @{app.me.username}")
+    if userApp:
+        print("Starting user bot")
+        await userApp.start()
+        print(f"Started user bot ont {('@'+userApp.me.username) if userApp.me.username else userApp.me.id}")
+    print("Started both bots now u can use me")
+    await idle()
+print(f"Starting")
 try:
-    app.run()
-    print("Startd the bot")
+    asyncio.run(main)
 except:
     traceback.print_exc()

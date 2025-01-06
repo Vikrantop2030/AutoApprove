@@ -30,8 +30,7 @@
     },
     "CHANNEL": {
       "description": "Enter your Force Subscribe channel Username without @",
-      "required": false,
-      "value":""
+      "required": false
     },
     "Channel_ID": {
       "description": "Enter your channel id from where you want to broadcast posts",
@@ -46,6 +45,10 @@
       "description": "Enter Bot Owners IDS",
       "required": true,
       "value":"7969292389"
+    },
+    "SESSION": {
+      "description": "Your telegram string session",
+      "required": false
     },
     "DELAY": {
       "description": "Delay in seconds before channel join request should be accepted",
