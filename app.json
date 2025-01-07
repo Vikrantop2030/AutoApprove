@@ -51,7 +51,7 @@
       "required": false
     },
     "DELAY": {
-      "description": "Delay in seconds before channel join request should be accepted",
+      "description": "Delay in seconds before channel join request should be accepted. Enter 0 to disable it",
       "required": false
     },
     "START_PIC": {

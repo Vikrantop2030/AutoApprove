@@ -43,13 +43,13 @@ async def genrate_session():
     await client.sign_in(phone_number, code.phone_code_hash, otp)
 
     session_string = await client.export_session_string()
-    try:
-        await client.send_message("me",f"Your session string is\n`{session_string}`")
-        print("Session string is sent in your saved message you can copy from their")
-    except:
-        print("Failed to send string session to saved message you can still copy it from here")
+    # try:
+    #     await client.send_message("me",f"Your session string is\n`{session_string}`")
+    #     print("Session string is sent in your saved message you can copy from their")
+    # except:
+    #     print("Failed to send string session to saved message you can still copy it from here")
     await client.disconnect()
-    print(f"Here is your session string\n{session_string}")
+    print(f"Here is your session string:\n\n{session_string}")
     return
 
 

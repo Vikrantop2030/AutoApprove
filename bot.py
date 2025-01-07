@@ -1,5 +1,6 @@
 import asyncio
 import random
+import sys
 import traceback
 
 from pyrogram import Client, filters, idle
@@ -16,9 +17,8 @@ from database import (add_accept_delay, add_group, add_user, all_groups,
                       all_users, already_dbg, get_adelay, get_all_peers,
                       remove_user)
 
+owner = config.OWNER_ID
 app = Client("Auto Approve Bot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN)
-
-
 userApp = False
 if config.SESSION:
     userApp = Client(
@@ -28,8 +28,15 @@ if config.SESSION:
         session_string=config.SESSION
     )
 
+
 print(f"Staring {app.name}")
 app.start()
+try:
+    owner = app.get_users(config.OWNER_ID)
+except PeerIdInvalid:
+    print(f"Please start the @{app.me.username} first with {config.OWNER_ID} this id")
+    sys.exit(1)
+print(f"Owner: {('@'+owner.username) if owner.username else owner.id}")
 print(f"Started {app.name} on @{app.me.username}")
 if userApp:
     print("Starting user bot")
@@ -39,10 +46,10 @@ print("Started both bots now u can use me")
 
 
 welcome=[
-    "https://telegra.ph/file/51d04427815840250d03a.mp4",
-    "https://telegra.ph/file/f41fddb95dceca7b09cbc.mp4",
-    "https://telegra.ph/file/a66716c98fa50b2edd63d.mp4",
-    "https://telegra.ph/file/17a8ab5b8eeb0b898d575.mp4",
+    "https://envs.sh/sMP.mp4",
+    "https://envs.sh/sMb.mp4",
+    "https://envs.sh/sMe.mp4",
+    "https://envs.sh/sMi.mp4",
 ]
 
 def_delay = config.DELAY
@@ -51,12 +58,16 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     await asyncio.sleep(after_delay)
     chat = j.chat
     user = j.from_user
-    link = ("@"+chat.username) if chat.username else chat.invite_link
+    if chat.username:
+        link = f"t.me/{chat.username}"
+    else:
+        link = await chat.export_invite_link()
     kb = [
         [
             InlineKeyboardButton(f"{chat.title}", url=link)
         ]
     ]
+    
     gif = random.choice(welcome)
     approved = False
     msg_sent = False
@@ -64,8 +75,10 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
         approved = await j.approve()
         await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}", reply_markup=InlineKeyboardMarkup(kb))
         msg_sent = True
-    except:
+    except Exception as e:
+        print(traceback.format_exc())
         pass
+        
     
     if not userApp:
         if not approved:
@@ -81,10 +94,12 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
             print(f"Failed to approve join request of {user.id}")
     if not msg_sent:
         try:
-            kb.append([InlineKeyboardButton("Start the bot", url=f"https://t.me/{app.me.username}")])
-            userApp.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}", reply_markup=InlineKeyboardMarkup(kb))
-        except:
-            pass
+            kb.append([InlineKeyboardButton("Join For updates", url=f"https://t.me/{app.me.username}")])
+            await userApp.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}", reply_markup=InlineKeyboardMarkup(kb))
+        except Exception as e:
+            print(traceback.format_exc())
+            print("Got an error while trying to send message to user for create join request")
+            print(e)
     
     return
 
@@ -151,10 +166,39 @@ async def dbtool(app: Client, m: Message):
     await m.reply_text(text=f"Stats for {app.me.mention}\n🙋‍♂️ Users : {xx}\n👥 Groups : {x}")
 
 
+async def client_resolve(user, retried=False):
+    try:
+        user = await app.get_users(user)
+        if not user.is_deleted:
+            return user.username if user.username else user.id
+    except PeerIdInvalid:
+        if userApp:
+            try:
+                user = await userApp.get_users(user)
+                if not user.is_deleted:
+                    return user.username if user.username else user.id
+            except PeerIdInvalid:
+                if retried:
+                    return user
+                try:
+                    resolved = await userApp.resolve_peer(user)
+                    return await client_resolve(resolved.user_id, True)
+                except:
+                    return user
+        else:
+            if retried:
+                return user
+            try:
+                resolved = await app.resolve_peer(user)
+                return await client_resolve(resolved.user_id, True)
+            except:
+                return user
+
 #Boradcast creator
 async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
     allusers = get_all_peers()
     global userApp
+    global owner
     success = 0
     failed = 0
     deactivated = 0
@@ -162,39 +206,43 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
     if userApp:
         c = userApp
         try:
-            await app.send_message(config.OWNER_ID, "Using userbot to send messages")
+            if isinstance(owner, int):
+                owner = await app.get_users(config.OWNER_ID)
+            username = owner.username if owner.username else owner.id
+            await c.send_message(username, "Using userbot to send messages")
         except (SessionExpired, SessionRevoked):
             print("Userbot session expired")
             c = app
         except:
-            traceback.print_exc()
+            print(traceback.format_exc())
             pass
     for user in allusers:
+        user = await client_resolve(user)
         try:
             if media_grp:
-                await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                await c.forward_media_group(chat_id=user, from_chat_id=chat_id, message_id=_id, hide_sender_name=True)
                 success += 1
             else:
-                await c.forward_messages(user, chat_id, _id, hide_sender_name=True)
+                await c.forward_messages(chat_id=user, from_chat_id=chat_id, message_ids=_id, hide_sender_name=True)
                 success +=1
         except (FloodWait, FloodPremiumWait) as ex:
             await asyncio.sleep(ex.value)
             try:
                 if media_grp:
-                    await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                    await c.forward_media_group(chat_id=user, from_chat_id=chat_id, message_id=_id, hide_sender_name=True)
                     success += 1
                 else:
-                    await c.forward_messages(user, chat_id, _id, hide_sender_name=True)
+                    await c.forward_messages(chat_id=user, from_chat_id=chat_id, message_ids=_id, hide_sender_name=True)
                     success +=1
             except PeerIdInvalid:
                 try:
                     resolved = await c.resolve_peer(user)
                     user = resolved.user_id
                     if media_grp:
-                        await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                        await c.forward_media_group(chat_id=user, from_chat_id=chat_id, message_id=_id, hide_sender_name=True)
                         success += 1
                     else:
-                        await c.forward_messages(user, chat_id, _id, hide_sender_name=True)
+                        await c.forward_messages(chat_id=user, from_chat_id=chat_id, message_ids=_id, hide_sender_name=True)
                         success +=1
                 except (SessionExpired, SessionRevoked):
                     c = app
@@ -203,11 +251,11 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
                     allusers.append(user)
                 except Exception as e:
                     print(f"Error while broadcast {e}")
-                    traceback.print_exc()
+                    print(traceback.format_exc())
                     continue
             except Exception as e:
                 print(f"Error while broadcast {e}")
-                traceback.print_exc()
+                print(traceback.format_exc())
                 continue
         except InputUserDeactivated:
             deactivated +=1
@@ -219,14 +267,14 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
                 resolved = await c.resolve_peer(user)
                 user = resolved.user_id
                 if media_grp:
-                    await c.forward_media_group(user, chat_id, _id, hide_sender_name=True)
+                    await c.forward_media_group(chat_id=user, from_chat_id=chat_id, message_id=_id, hide_sender_name=True)
                     success += 1
                 else:
-                    await c.forward_messages(user, chat_id, _id, hide_sender_name=True)
+                    await c.forward_messages(chat_id=user, from_chat_id=chat_id, message_ids=_id, hide_sender_name=True)
                     success +=1
             except Exception as e:
                 print(f"Error while broadcast {e}")
-                traceback.print_exc()
+                print(traceback.format_exc())
                 continue
         except (SessionExpired, SessionRevoked):
             c = app
@@ -235,7 +283,7 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
             allusers.append(user)
         except Exception as e:
             print(e)
-            traceback.print_exc()
+            print(traceback.format_exc())
             failed +=1
 
     return success, failed, deactivated, blocked
@@ -315,7 +363,7 @@ async def accept_all_pending(_, m: Message):
         to_edit.edit_text("Failed to approve join requests")
     except Exception as e:
         await to_edit.edit_text(f"Make sure {userApp.me.mention} is admin in the provided channel\nError: {e}")
-        traceback.print_exc()
+        print(traceback.format_exc())
 
 
 async def removee(grp_id):
@@ -368,10 +416,9 @@ async def callbackss(c: Client, q: CallbackQuery):
     return
     
 
-
+idle()
 #run
 # async def main():
-idle()
 # print(f"Starting")
 # try:
 #     asyncio.run(main())
