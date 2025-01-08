@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import random
 import sys
 import traceback
@@ -42,7 +43,7 @@ if userApp:
     print("Starting user bot")
     userApp.start()
     print(f"Started user bot ont {('@'+userApp.me.username) if userApp.me.username else userApp.me.id}")
-print("Started both bots now u can use me")
+print("Started bot(s) now u can use me")
 
 
 welcome=[
@@ -54,17 +55,43 @@ welcome=[
 
 def_delay = config.DELAY
 
+
+async def encode_decode(string, to_do="encode"):
+    """
+    Function to encode or decode strings.
+    string: string to be decoded or encoded.
+    to_do: 'encode' to encode the string, 'decode' to decode the string.
+    """
+    string = str(string)
+    if to_do.lower() == "encode":
+        encodee = string.encode("ascii")
+        base64_ = base64.b64encode(encodee)
+        B64 = base64_.decode("ascii")
+
+    elif to_do.lower() == "decode":
+        decodee = string.encode("ascii")
+        base64_ = base64.b64decode(decodee)
+        B64 = base64_.decode("ascii")
+
+    return B64
+
 async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int):
     await asyncio.sleep(after_delay)
     chat = j.chat
     user = j.from_user
-    if chat.username:
-        link = f"t.me/{chat.username}"
-    else:
-        link = await chat.export_invite_link()
+    # if chat.username:
+    #     link = f"t.me/{chat.username}"
+    # else:
+    #     link = await chat.export_invite_link()
+    id_ = app.me.id - user.id
+    val = await encode_decode(f"{chat.id}_{id_}")
+    start_link = f"tg://resolve?domain={app.me.username}&start={val}"
     kb = [
+        # [
+        #     InlineKeyboardButton(f"{chat.title}", url=link)
+        # ],
         [
-            InlineKeyboardButton(f"{chat.title}", url=link)
+            InlineKeyboardButton("Click here to join", url=start_link)
         ]
     ]
     
@@ -72,30 +99,29 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     approved = False
     msg_sent = False
     try:
-        approved = await j.approve()
-        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}", reply_markup=InlineKeyboardMarkup(kb))
+        # approved = await j.approve()
+        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nThanks for creating join request\nClick on **Click here to join** to get accepted in channel", reply_markup=InlineKeyboardMarkup(kb))
         msg_sent = True
     except Exception as e:
         print(traceback.format_exc())
         pass
         
     
-    if not userApp:
-        if not approved:
-            print(f"Failed to approve join request of {user.id}")
-        if not msg_sent:
-            print(f"Failed to send message to this user")
-        return
+    # if not userApp:
+    #     if not approved:
+    #         print(f"Failed to approve join request of {user.id}")
+    #     if not msg_sent:
+    #         print(f"Failed to send message to this user")
+    #     return
     
-    if not approved:
+    # if not approved:
+    #     try:
+    #         await userApp.approve_chat_join_request(chat.id, user.id)
+    #     except:
+    #         print(f"Failed to approve join request of {user.id}")
+    if not msg_sent and userApp:
         try:
-            await userApp.approve_chat_join_request(chat.id, user.id)
-        except:
-            print(f"Failed to approve join request of {user.id}")
-    if not msg_sent:
-        try:
-            kb.append([InlineKeyboardButton("Join For updates", url=f"https://t.me/{app.me.username}")])
-            await userApp.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nWelcome To {chat.title}\n\n{user.first_name} Your Request To Join {chat.title} Has Been Accepted By {app.me.first_name}", reply_markup=InlineKeyboardMarkup(kb))
+            await userApp.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.mention}\nThanks for creating join request\nClick on **Click here to join** to get accepted in channel", reply_markup=InlineKeyboardMarkup(kb))
         except Exception as e:
             print(traceback.format_exc())
             print("Got an error while trying to send message to user for create join request")
@@ -136,6 +162,41 @@ async def start(app: Client, msg: Message):
     #         await app.send_message(text=f"I'm not admin in fsub chat, Ending fsub...", chat_id=config.OWNER_ID)
     # else:
     # add_user(msg.from_user.id)
+    # print(msg.text.strip().split())
+    if len(msg.text.strip().split()) > 1:
+        arg = msg.text.split(None, 1)[1]
+        # print(arg)
+        arg = await encode_decode(arg, "decode")
+        channel, user = arg.split("_")
+        channel = int(channel)
+        user = int(user) + msg.from_user.id
+        if user == app.me.id:
+            chat = await app.get_chat(channel)
+            if chat.username:
+                link = f"t.me/{chat.username}"
+            else:
+                link = await chat.export_invite_link()
+            kb = [
+                [
+                    InlineKeyboardButton(f"{chat.title}", url=link)
+                ]
+            ]
+            approved = False
+            try:
+                approved = await app.approve_chat_join_request(channel, msg.from_user.id)
+                await msg.reply_text("Your join reqest is accepted successfully",reply_markup=InlineKeyboardMarkup(kb))
+            except:
+                pass
+            if not approved and userApp:
+                try:
+                    approved = await userApp.approve_chat_join_request(channel, user)
+                    await msg.reply_text("Your join reqest is accepted successfully", reply_markup=InlineKeyboardMarkup(kb))
+                except:
+                    print(traceback.format_exc())
+            if not approved:
+                await msg.reply_text("Your join request will be accepted later")
+            return
+
     await msg.reply_photo(
         photo=config.START_PIC,
         caption=f"Hᴇʟʟᴏ {msg.from_user.mention}💞,\n\n☉ Tʜɪs ɪs {app.me.mention},\n\n➲ A ᴛᴇʟᴇɢʀᴀᴍ ʙᴏᴛ ᴍᴀᴅᴇ ғᴏʀ ᴀᴜᴛᴏ ᴀᴘᴘʀᴏᴠɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛ ɪɴ ɢʀᴏᴜᴘ/ᴄʜᴀɴɴᴇʟ.\n\n➲ Jᴜsᴛ ᴀᴅᴅ {app.me.mention} ɪɴ ɢʀᴏᴜᴘs/ᴄʜᴀɴɴᴇʟs ᴀɴᴅ ᴍᴀᴋᴇ ᴀᴅᴍɪɴ ᴡɪᴛʜ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ʀɪɢʜᴛs.",
@@ -203,19 +264,19 @@ async def broadcaster(c: Client, chat_id: int, _id: int, media_grp=False):
     failed = 0
     deactivated = 0
     blocked = 0
-    if userApp:
-        c = userApp
-        try:
-            if isinstance(owner, int):
-                owner = await app.get_users(config.OWNER_ID)
-            username = owner.username if owner.username else owner.id
-            await c.send_message(username, "Using userbot to send messages")
-        except (SessionExpired, SessionRevoked):
-            print("Userbot session expired")
-            c = app
-        except:
-            print(traceback.format_exc())
-            pass
+    # if userApp:
+    #     c = userApp
+    #     try:
+    #         if isinstance(owner, int):
+    #             owner = await app.get_users(config.OWNER_ID)
+    #         username = owner.username if owner.username else owner.id
+    #         await c.send_message(username, "Using userbot to send messages")
+    #     except (SessionExpired, SessionRevoked):
+    #         print("Userbot session expired")
+    #         c = app
+    #     except:
+    #         print(traceback.format_exc())
+    #         pass
     for user in allusers:
         user = await client_resolve(user)
         try:
