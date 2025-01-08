@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 API_ID = int(getenv("API_ID", 29400566))
 API_HASH = getenv("API_HASH", "8fd30dc496aea7c14cf675f59b74ec6f")
 BOT_TOKEN = getenv("BOT_TOKEN") #Put your bot token here
-# CHANNEL = getenv("CHANNEL", "ZenBotX") #Your public channel username without @ for force subscription.
+# CHANNEL = getenv("CHANNEL", "gojo_bots_network") #Your public channel username without @ for force subscription.
 MONGO = getenv("MONGO") #Put mongo db url here
 #Optional Variables
 DELAY = int(getenv("DELAY", 5)) #Delay in secondsbefore join request should be accepted default to 5 seconds. Enter 0 to disable it
