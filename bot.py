@@ -79,49 +79,51 @@ async def create_approve_task(app: Client, j: ChatJoinRequest, after_delay: int)
     await asyncio.sleep(after_delay)
     chat = j.chat
     user = j.from_user
-    # if chat.username:
-    #     link = f"t.me/{chat.username}"
-    # else:
-    #     link = await chat.export_invite_link()
+    if link := links.get(chat.id):
+        link = link
+    elif chat.username:
+        link = f"t.me/{chat.username}"
+    else:
+        link = await chat.export_invite_link()
     id_ = app.me.id - user.id
     val = await encode_decode(f"{chat.id}_{id_}")
     start_link = f"tg://resolve?domain={app.me.username}&start={val}"
     kb = [
-        # [
-        #     InlineKeyboardButton(f"{chat.title}", url=link)
-        # ],
         [
-            InlineKeyboardButton("Click here to join", url=start_link)
-        ]
+            InlineKeyboardButton(f"{chat.title}", url=link)
+        ],
+        # [
+        #     InlineKeyboardButton("Click here to join", url=start_link)
+        # ]
     ]
     
     gif = random.choice(welcome)
     approved = False
     msg_sent = False
     try:
-        # approved = await j.approve()
-        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nThanks for creating join request\nClick on **Click here to join** to get accepted in channel", reply_markup=InlineKeyboardMarkup(kb))
+        approved = await j.approve()
+        await app.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.first_name}\nYou join request to join {chat.title} has been accepted", reply_markup=InlineKeyboardMarkup(kb))
         msg_sent = True
     except Exception as e:
         print(traceback.format_exc())
         pass
         
     
-    # if not userApp:
-    #     if not approved:
-    #         print(f"Failed to approve join request of {user.id}")
-    #     if not msg_sent:
-    #         print(f"Failed to send message to this user")
-    #     return
+    if not userApp:
+        if not approved:
+            print(f"Failed to approve join request of {user.id}")
+        if not msg_sent:
+            print(f"Failed to send message to this user")
+        return
     
-    # if not approved:
-    #     try:
-    #         await userApp.approve_chat_join_request(chat.id, user.id)
-    #     except:
-    #         print(f"Failed to approve join request of {user.id}")
+    if not approved:
+        try:
+            await userApp.approve_chat_join_request(chat.id, user.id)
+        except:
+            print(f"Failed to approve join request of {user.id}")
     if not msg_sent and userApp:
         try:
-            await userApp.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.mention}\nThanks for creating join request\nClick on **Click here to join** to get accepted in channel", reply_markup=InlineKeyboardMarkup(kb))
+            await userApp.send_animation(chat_id=user.id, animation=gif, caption=f"Hey There {user.mention}\nYour join request to join the {chat.title} chat has been accepted", reply_markup=InlineKeyboardMarkup(kb))
         except Exception as e:
             print(traceback.format_exc())
             print("Got an error while trying to send message to user for create join request")
@@ -146,10 +148,14 @@ async def approval(app: Client, m: ChatJoinRequest):
     asyncio.create_task(create_approve_task(app, m, Delay))
 
     
+links = {
+
+}
 
 #pvtstart
 @app.on_message(filters.command("start") & filters.private)
 async def start(app: Client, msg: Message):
+    add_user(msg.from_user.id)
     # if False:
     #     try:
     #         await app.get_chat_member(chat_id=config.CHANNEL, user_id=msg.from_user.id)
@@ -163,9 +169,26 @@ async def start(app: Client, msg: Message):
     # else:
     # add_user(msg.from_user.id)
     # print(msg.text.strip().split())
+    global links
     if len(msg.text.strip().split()) > 1:
         arg = msg.text.split(None, 1)[1]
         # print(arg)
+        if arg.startswith("j_"):
+            channel = int(arg.split("_",1)[-1])
+            if link := links.get(channel):
+                link = link
+            else:
+                link = (await app.create_chat_invite_link(int(channel), creates_join_request=True)).invite_link
+                links[channel] = link
+            kb = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton("Join channel", url = link)
+                    ]
+                ]
+            )
+            await msg.reply_photo(config.START_PIC, caption=f"Hey {msg.from_user.mention}! Thanks for verifying your are user\nClick on below button to join the channel", reply_markup=kb)
+            return
         arg = await encode_decode(arg, "decode")
         channel, user = arg.split("_")
         channel = int(channel)
@@ -208,7 +231,7 @@ async def start(app: Client, msg: Message):
             ]
         )
     )
-    add_user(msg.from_user.id)
+    
     
 
 #Gcstart and id

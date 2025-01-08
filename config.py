@@ -13,5 +13,6 @@ DELAY = int(getenv("DELAY", 5)) #Delay in secondsbefore join request should be a
 OWNER_ID = int(getenv("OWNER_ID", 1344569458)) 
 FSUB = bool(getenv("FSUB", False)) #Set this True if you want to enable force subscription from users else set to False.
 CHANNEL_ID = int(getenv("Channel_ID")) #Id of channel from where you want to automatically broadcast messages
+DB_NAME = getenv("DB_NAME", "main")
 SESSION = getenv("SESSION", False) #Telegram string session optional though
 START_PIC = getenv("START_PIC", "https://i.ibb.co/87q5Ccy/Saccept.jpg")

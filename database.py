@@ -1,12 +1,12 @@
 from pymongo import MongoClient
 
-from config import MONGO
+from config import DB_NAME, MONGO
 
 client = MongoClient(MONGO)
 
-users = client['main']['users']
-groups = client['main']['groups']
-delay = client['main']['delay']
+users = client[DB_NAME]['users']
+groups = client[DB_NAME]['groups']
+delay = client[DB_NAME]['delay']
 
 def already_db(user_id):
     user = users.find_one({"user_id" : str(user_id)})

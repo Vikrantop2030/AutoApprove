@@ -57,6 +57,11 @@
     "START_PIC": {
       "description": "Link of the photo you want to use as start pic make sure it is telegraph link or any other link which can be directly accessed by the link",
       "required": false
+    },
+    "DB_NAME": {
+      "description": "Name of database",
+      "required": false,
+      "value": "main"
     }
         
   },
